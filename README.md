@@ -24,7 +24,8 @@ Remotion + React + TypeScript で作る、Instagram Reels / TikTok 向け 9:16 �
 ```
 public/
   data/
-    sleep-time.csv          # サンプルテーマのデータ（prefecture,value）
+    sleep-time.csv          # サンプルテーマのデータ（架空の数値、prefecture,value）
+    sushi-shops.csv         # 実データテーマ（人口10万人あたり寿司店数、e-Stat 2021年6月調査）
 
 scripts/
   build-map-paths.py        # 地図GeoJSON -> SVGパス変換スクリプト（再生成用）
@@ -32,7 +33,7 @@ scripts/
 
 src/
   index.ts                  # Remotionのエントリーポイント
-  Root.tsx                  # Compositionの登録・尺の計算・データ読み込み
+  Root.tsx                  # テーマごとに1つCompositionを自動生成（尺の計算・データ読み込み込み）
 
   config/
     timing.ts               # 解像度・fps・各パートの長さ（秒）
@@ -74,11 +75,16 @@ npm install
 npm start          # Remotion Studio が起動（ブラウザでプレビュー・スクラブ再生）
 ```
 
-書き出す場合:
+Studio左のCompositions一覧に、テーマごとに `sleep-time` / `sushi-shops` のようにテーマIDそのものの名前で並びます（`src/data/themes/registry.ts` にエントリを足すだけで一覧に増えます）。
+
+書き出す場合はComposition名を指定してレンダリングします:
 
 ```bash
-npm run build       # out/video.mp4 に書き出し
+npx remotion render sleep-time out/sleep-time.mp4
+npx remotion render sushi-shops out/sushi-shops.mp4
 ```
+
+`npm run build`（sleep-time）/ `npm run build:sushi-shops` でも同じことができます。
 
 ### このサンドボックス環境について
 
@@ -115,11 +121,11 @@ npm run build       # out/video.mp4 に書き出し
    },
    ```
 
-3. `src/Root.tsx` の `defaultProps.themeId`（または `remotion render` 時の `--props`）を新しいテーマIDに変更
-
-これでコンポーネント側は一切変更不要です。数値のフォーマットが既存の4種（`hoursMinutes` / `decimal1` / `integer` / `percent1`）で足りない場合のみ、`src/utils/formatters.ts` に関数を1つ追加し、`ValueFormatterId`（`src/data/types.ts`）にIDを足してください。
+これだけで `sleep-time` / `sushi-shops` と同様に `commute-time` という名前のComposition（`npx remotion render commute-time ...`）としてStudioにも一覧にも現れます。`Root.tsx` を編集する必要はありません。数値のフォーマットが既存の4種（`hoursMinutes` / `decimal1` / `integer` / `percent1`）で足りない場合のみ、`src/utils/formatters.ts` に関数を1つ追加し、`ValueFormatterId`（`src/data/types.ts`）にIDを足してください。
 
 地図の色分け（少ない=青 〜 多い=赤の5段階）は `src/utils/colorScale.ts` がCSVの実データから分位点（20/40/60/80パーセンタイル）を自動計算するので、テーマごとに設定する必要はありません。
+
+CSVには `prefecture,value` の2列以降に検証用の列（例: `sushi-shops.csv` の `store_count`, `population_estimate`）を自由に追加できます。パーサー（`src/utils/csv.ts`）は先頭2列しか読まないので、3列目以降は動画には出ず、データの裏取り用に保持できます。
 
 ## 日本地図データについて
 
@@ -136,6 +142,6 @@ python3 build-map-paths.py
 - **地図の見せ方**: 「まだ登場していない県」の濃淡や、地方ブロック単位のラベル表示など、地図単体でも状況が伝わる工夫
 - **暫定TOP3が3県に満たない序盤の挙動**: 現状は1〜2件でもそのまま表示されるが、専用の見せ方（スロットを埋める演出など）を検討してもよい
 - **BGM・効果音**: `@remotion/media` などで都道府県切り替え時の軽いSE、TOP3更新時のSEを追加
-- **複数テーマの一括レンダリング**: `--props` や環境変数でテーマIDを渡し、CIで複数テーマを一括書き出しするスクリプト化
-- **実データの投入**: 現在のサンプルCSVは仮の架空データ（`sourceText` で明記済み）。実際の統計データに差し替える際は出典表記を忘れずに
+- **複数テーマの一括レンダリング**: 現状はComposition名ごとに1コマンドずつ実行が必要。`THEME_REGISTRY` を読んで全テーマを順にレンダリングするスクリプト化
+- **sleep-time のデータ差し替え**: `sleep-time.csv` は仮の架空データのまま（`sourceText` で明記済み）。`sushi-shops.csv`（e-Stat 2021年6月調査）と同じ要領で実データに差し替え可能
 - **アクセシビリティ的な補助**: 色覚多様性を考慮した配色チェック（現在の黄色/青/グレーの組み合わせは概ね安全だが再確認推奨）

@@ -5,7 +5,8 @@
   "description": "Remotion template that turns a prefecture -> value CSV/JSON dataset into a 9:16 north-to-south ranking video for Reels/TikTok/Shorts.",
   "scripts": {
     "start": "remotion studio",
-    "build": "remotion render PrefectureRanking out/video.mp4",
+    "build": "remotion render sleep-time out/sleep-time.mp4",
+    "build:sushi-shops": "remotion render sushi-shops out/sushi-shops.mp4",
     "still": "remotion still",
     "upgrade": "remotion upgrade",
     "typecheck": "tsc -noEmit"
