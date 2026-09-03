@@ -129,6 +129,18 @@ def polygons_to_path(polygons, project):
     return "".join(parts)
 
 
+def polygons_projected_bbox(polygons, project):
+    xs = []
+    ys = []
+    for polygon in polygons:
+        for ring in polygon:
+            for lon, lat in ring:
+                x, y = project(lon, lat)
+                xs.append(x)
+                ys.append(y)
+    return min(xs), min(ys), max(xs), max(ys)
+
+
 entries = []
 for feature in data["features"]:
     props = feature["properties"]
@@ -137,7 +149,8 @@ for feature in data["features"]:
     polygons = filtered_polygons_by_id[pid]
     project = project_okinawa if pid == OKINAWA_ID else project_main
     path = polygons_to_path(polygons, project)
-    entries.append((pid, name_ja, path))
+    bbox = polygons_projected_bbox(polygons, project)
+    entries.append((pid, name_ja, path, bbox))
 
 entries.sort(key=lambda e: e[0])
 
@@ -151,20 +164,26 @@ lines.append("  jisCode: number;")
 lines.append("  nameJa: string;")
 lines.append("  /** SVG path `d` attribute, in the map's own local viewBox coordinate space */")
 lines.append("  path: string;")
+lines.append("  /** [minX, minY, maxX, maxY] of this prefecture, same coordinate space as `path` */")
+lines.append("  bbox: [number, number, number, number];")
 lines.append("  /** true for prefectures rendered in the separate Okinawa inset box */")
 lines.append("  inset: boolean;")
 lines.append("}")
 lines.append("")
 lines.append(f"export const MAIN_MAP_VIEWBOX = '0 0 {MAIN_VIEW_W} {MAIN_VIEW_H}';")
 lines.append(f"export const OKINAWA_INSET_VIEWBOX = '0 0 {INSET_VIEW_W} {INSET_VIEW_H}';")
+lines.append(f"export const MAIN_MAP_BBOX: [number, number, number, number] = [0, 0, {MAIN_VIEW_W}, {MAIN_VIEW_H}];")
+lines.append(f"export const OKINAWA_INSET_BBOX: [number, number, number, number] = [0, 0, {INSET_VIEW_W}, {INSET_VIEW_H}];")
 lines.append("")
 lines.append("export const PREFECTURE_PATHS: PrefecturePathDatum[] = [")
-for pid, name_ja, path in entries:
+for pid, name_ja, path, bbox in entries:
     inset = "true" if pid == OKINAWA_ID else "false"
+    bx = ", ".join(f"{v:.2f}" for v in bbox)
     lines.append("  {")
     lines.append(f"    jisCode: {pid},")
     lines.append(f"    nameJa: '{name_ja}',")
     lines.append(f"    path: '{path}',")
+    lines.append(f"    bbox: [{bx}],")
     lines.append(f"    inset: {inset},")
     lines.append("  },")
 lines.append("];")

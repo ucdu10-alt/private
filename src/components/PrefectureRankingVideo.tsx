@@ -1,9 +1,9 @@
 import React from 'react';
 import {AbsoluteFill, Series} from 'remotion';
 import type {RankedPrefecture, ResolvedTheme} from '../data/types';
-import {FINAL_TOP_FIVE_FRAMES, INTRO_FRAMES, PER_PREFECTURE_FRAMES} from '../config/timing';
+import {FINAL_TOP_FIVE_FRAMES, PER_PREFECTURE_FRAMES} from '../config/timing';
 import {COLORS, FONT_FAMILY} from '../config/theme';
-import {TitleCard} from './TitleCard';
+import {PersistentHeader} from './PersistentHeader';
 import {RankingScene} from './RankingScene';
 import {FinalTopFive} from './FinalTopFive';
 
@@ -29,11 +29,11 @@ export const PrefectureRankingVideo: React.FC<PrefectureRankingVideoProps> = ({t
 
   return (
     <AbsoluteFill style={{backgroundColor: COLORS.background, fontFamily: FONT_FAMILY}}>
-      <Series>
-        <Series.Sequence durationInFrames={INTRO_FRAMES}>
-          <TitleCard title={theme.title} subtitle={theme.subtitle} durationInFrames={INTRO_FRAMES} />
-        </Series.Sequence>
+      {/* Rendered outside the Series so it stays mounted (and thus visibly
+          on screen) for the whole video instead of only during one phase. */}
+      <PersistentHeader title={theme.title} />
 
+      <Series>
         <Series.Sequence durationInFrames={orderedRows.length * PER_PREFECTURE_FRAMES}>
           <RankingScene theme={theme} orderedRows={orderedRows} perPrefectureFrames={PER_PREFECTURE_FRAMES} />
         </Series.Sequence>

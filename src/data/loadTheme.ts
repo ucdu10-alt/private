@@ -1,6 +1,7 @@
 import {staticFile} from 'remotion';
 import {parsePrefectureCsv} from '../utils/csv';
 import {computeRankings} from '../utils/ranking';
+import {buildColorScale} from '../utils/colorScale';
 import {THEME_REGISTRY} from './themes/registry';
 import type {ResolvedTheme} from './types';
 
@@ -25,6 +26,7 @@ export const loadTheme = async (themeId: string): Promise<ResolvedTheme> => {
   const data = parsePrefectureCsv(csvText);
   const ranked = computeRankings(data, meta.rankDirection);
   const rankByPrefecture = Object.fromEntries(ranked.map((row) => [row.prefecture, row]));
+  const colorScale = buildColorScale(data.map((row) => row.value));
 
-  return {...meta, data, ranked, rankByPrefecture};
+  return {...meta, data, ranked, rankByPrefecture, colorScale};
 };

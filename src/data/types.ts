@@ -1,3 +1,5 @@
+import type {ColorScale} from '../utils/colorScale';
+
 /** One row of raw input data: a prefecture name and its measured value. */
 export interface PrefectureDataRow {
   /** Full Japanese prefecture name, e.g. "鹿児島県", "北海道". Must match data/prefectureOrder.ts exactly. */
@@ -46,4 +48,6 @@ export interface ResolvedTheme extends ThemeMeta {
   ranked: RankedPrefecture[];
   /** Fast lookup from prefecture name -> its national ranking row. */
   rankByPrefecture: Record<string, RankedPrefecture>;
+  /** Choropleth color scale (low -> high) derived from this theme's own data. */
+  colorScale: ColorScale;
 }

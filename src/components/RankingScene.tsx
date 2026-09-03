@@ -2,10 +2,11 @@ import React, {useMemo} from 'react';
 import {AbsoluteFill, useCurrentFrame} from 'remotion';
 import type {RankedPrefecture, ResolvedTheme} from '../data/types';
 import {computeProvisionalTopN} from '../utils/ranking';
+import {colorForValue} from '../utils/colorScale';
 import {JapanMap} from './JapanMap';
 import {CurrentPrefecturePanel} from './CurrentPrefecturePanel';
 import {TopThreeBoard} from './TopThreeBoard';
-import {COLORS} from '../config/theme';
+import {MapLegend} from './MapLegend';
 
 export interface RankingSceneProps {
   theme: ResolvedTheme;
@@ -25,10 +26,16 @@ export const RankingScene: React.FC<RankingSceneProps> = ({theme, orderedRows, p
   const currentIndex = Math.min(Math.floor(frame / perPrefectureFrames), orderedRows.length - 1);
   const localFrame = frame - currentIndex * perPrefectureFrames;
   const currentRow = orderedRows[currentIndex];
+  const previousRow = currentIndex > 0 ? orderedRows[currentIndex - 1] : undefined;
 
   const revealedNames = useMemo(
     () => new Set(orderedRows.slice(0, currentIndex + 1).map((r) => r.prefecture)),
     [orderedRows, currentIndex],
+  );
+
+  const colorByName = useMemo(
+    () => new Map(theme.data.map((row) => [row.prefecture, colorForValue(row.value, theme.colorScale)])),
+    [theme.data, theme.colorScale],
   );
 
   const previousTop3 = useMemo(
@@ -41,13 +48,20 @@ export const RankingScene: React.FC<RankingSceneProps> = ({theme, orderedRows, p
   );
 
   return (
-    <AbsoluteFill style={{display: 'flex', flexDirection: 'column', padding: '36px 36px 28px'}}>
-      <div style={{textAlign: 'center', color: COLORS.textSecondary, fontSize: 26, marginBottom: 4}}>
-        {theme.subtitle ?? theme.title}
+    <AbsoluteFill style={{display: 'flex', flexDirection: 'column', padding: '108px 36px 28px'}}>
+      <div style={{position: 'relative', flex: 1, minHeight: 0}}>
+        <JapanMap
+          currentPrefectureName={currentRow.prefecture}
+          previousPrefectureName={previousRow?.prefecture}
+          revealedNames={revealedNames}
+          colorByName={colorByName}
+          localFrame={localFrame}
+          durationInFrames={perPrefectureFrames}
+        />
       </div>
 
-      <div style={{position: 'relative', flex: 1, minHeight: 0}}>
-        <JapanMap currentPrefectureName={currentRow.prefecture} revealedNames={revealedNames} />
+      <div style={{display: 'flex', justifyContent: 'center', margin: '6px 0 2px'}}>
+        <MapLegend colorScale={theme.colorScale} valueFormatterId={theme.valueFormatterId} unit={theme.unit} />
       </div>
 
       <CurrentPrefecturePanel

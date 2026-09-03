@@ -8,9 +8,12 @@ Remotion + React + TypeScript で作る、Instagram Reels / TikTok 向け 9:16 �
 
 - 解像度: 1080×1920（9:16 縦型）
 - フレームレート: 30fps
-- 尺: 約30.8秒（`src/config/timing.ts` の定数を変えるだけで再調整可能）
+- 尺: 約39秒（`src/config/timing.ts` の定数を変えるだけで再調整可能）
 - 表示順: 北→南の固定順（`src/data/prefectureOrder.ts`。ランキング順ではない）
 - 順位: CSVの `value` から自動計算（手入力しない）
+- タイトル（テーマの問いかけ文）は動画冒頭だけでなく **常に画面上部に表示**
+- 地図は都道府県が切り替わるたびに、その都道府県へ **パン&ズーム** する（沖縄は本土から離れているため、専用インセット枠が拡大して強調される）
+- 地図は「まだ登場していない県（グレー）」「登場済みの県（値に応じた5段階の色分け、少ない=青 〜 多い=赤）」「現在の県（発光ハイライト）」の3状態＋色分けの凡例付き
 
 ## プロジェクト構造
 
@@ -34,26 +37,29 @@ src/
   data/
     types.ts                # ThemeMeta / ResolvedTheme などの型定義
     prefectureOrder.ts       # 北→南の固定表示順（47件）
-    loadTheme.ts             # CSVを読み込んで順位を計算するローダー
+    loadTheme.ts             # CSVを読み込んで順位・配色スケールを計算するローダー
     themes/
       registry.ts            # テーマ一覧（タイトル・単位・フォーマット等）
     geo/
-      japanPaths.ts          # 都道府県ごとのSVGパス（自動生成、手編集禁止）
+      japanPaths.ts          # 都道府県ごとのSVGパス＋バウンディングボックス（自動生成、手編集禁止）
 
   utils/
     csv.ts                   # prefecture,value 形式のCSVパーサー
     ranking.ts                # 全国順位 / 暫定TOP3の計算ロジック
     formatters.ts             # 数値の表示形式（分→時間分、小数、% など）
+    colorScale.ts             # 値に応じた5段階の色分け（少ない=青 〜 多い=赤）
+    mapCamera.ts              # 都道府県の位置へ地図カメラをパン&ズームさせる計算
 
   components/
-    PrefectureRankingVideo.tsx # 全体の時間割（タイトル→本編→TOP5）
-    TitleCard.tsx               # 冒頭タイトル（約1.2秒）
+    PrefectureRankingVideo.tsx # 全体の時間割（本編→TOP5、常時ヘッダー表示）
+    PersistentHeader.tsx        # 常に画面上部に表示されるタイトル
     RankingScene.tsx            # 本編：フレーム→現在の都道府県を算出する中枢
-    JapanMap.tsx                 # 47都道府県を個別に着色できる日本地図
-    CurrentPrefecturePanel.tsx   # 県名・数値・全国順位の表示
-    TopThreeBoard.tsx            # 暫定TOP3（順位入れ替えアニメーション付き）
-    FinalTopFive.tsx              # 終盤の全国TOP5
-    RankPill.tsx                  # 順位の丸バッジ（共通パーツ）
+    JapanMap.tsx                 # 都道府県ごとに色分け・カメラがパン&ズームする日本地図
+    MapLegend.tsx                 # 地図の色分け凡例（少ない〜多い）
+    CurrentPrefecturePanel.tsx     # 県名・数値・全国順位の表示
+    TopThreeBoard.tsx              # 暫定TOP3（順位入れ替えアニメーション付き）
+    FinalTopFive.tsx                # 終盤の全国TOP5
+    RankPill.tsx                    # 順位の丸バッジ（共通パーツ）
 ```
 
 ## 動かし方
@@ -108,9 +114,11 @@ npm run build       # out/video.mp4 に書き出し
 
 これでコンポーネント側は一切変更不要です。数値のフォーマットが既存の4種（`hoursMinutes` / `decimal1` / `integer` / `percent1`）で足りない場合のみ、`src/utils/formatters.ts` に関数を1つ追加し、`ValueFormatterId`（`src/data/types.ts`）にIDを足してください。
 
+地図の色分け（少ない=青 〜 多い=赤の5段階）は `src/utils/colorScale.ts` がCSVの実データから分位点（20/40/60/80パーセンタイル）を自動計算するので、テーマごとに設定する必要はありません。
+
 ## 日本地図データについて
 
-`src/data/geo/japanPaths.ts` は手編集しないでください。元データは [dataofjapan/land](https://github.com/dataofjapan/land) の GeoJSON を [mapshaper](https://github.com/mbloch/mapshaper) で簡略化し、`scripts/build-map-paths.py` で SVG パスへ投影・変換したものです。沖縄は本土から地理的に離れているため、本土とは別の小さな枠（インセット）に個別投影しています。地図を再生成する場合:
+`src/data/geo/japanPaths.ts` は手編集しないでください。元データは [dataofjapan/land](https://github.com/dataofjapan/land) の GeoJSON を [mapshaper](https://github.com/mbloch/mapshaper) で簡略化し、`scripts/build-map-paths.py` で SVG パスへ投影・変換したものです。各都道府県のバウンディングボックスもここで一緒に計算され、`JapanMap.tsx` のパン&ズームカメラ（`src/utils/mapCamera.ts`）がそれを使って各都道府県にフレーミングします。沖縄は本土から地理的に離れているため、本土とは別の小さな枠（インセット）に個別投影し、表示中はそのインセット自体が拡大されます。地図を再生成する場合:
 
 ```bash
 cd scripts

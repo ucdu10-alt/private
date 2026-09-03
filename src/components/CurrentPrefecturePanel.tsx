@@ -38,7 +38,10 @@ export const CurrentPrefecturePanel: React.FC<CurrentPrefecturePanelProps> = ({
     extrapolateRight: 'clamp',
   });
 
-  const countEnd = Math.max(2, Math.min(12, durationInFrames - 3));
+  // Keep the count-up/rank-reveal short relative to how long the
+  // prefecture stays on screen, so most of its time on screen is spent
+  // holding still and readable rather than mid-animation.
+  const countEnd = Math.max(2, Math.min(8, durationInFrames - 10));
   const countProgress = interpolate(localFrame, [0, countEnd], [0, 1], {
     extrapolateLeft: 'clamp',
     extrapolateRight: 'clamp',
@@ -46,7 +49,7 @@ export const CurrentPrefecturePanel: React.FC<CurrentPrefecturePanelProps> = ({
   const displayedValue = row.value * countProgress;
   const formattedValue = formatValue(theme.valueFormatterId, displayedValue, theme.unit);
 
-  const rankOpacity = interpolate(localFrame, [countEnd, countEnd + 6], [0, 1], {
+  const rankOpacity = interpolate(localFrame, [countEnd, countEnd + 5], [0, 1], {
     extrapolateLeft: 'clamp',
     extrapolateRight: 'clamp',
   });
