@@ -33,7 +33,6 @@ export const THEME_REGISTRY: Record<string, ThemeMeta> = {
     sourceText: '出典: e-Stat 経済センサス（2021年6月調査）',
     csvPath: 'data/sushi-shops.csv',
     displayOrder: 'rankAscending',
-    hookText: '寿司屋が多い県、海沿いが強いと思ってない？',
     reactions: {
       福井県: '北陸勢、強い…！',
       石川県: '石川も20店超え！',
