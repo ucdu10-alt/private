@@ -22,6 +22,8 @@ export interface TimeseriesConfig {
   endingDuration: number;
   compareFrom: CompareFrom;
   annotations: Annotation[];
+  /** Overrides the fish's top-level `source` for this mode only -- use when timeseries.csv and prefecture.csv come from different statistics/sources. */
+  source?: FishSource;
 }
 
 /** `rankCount` in a fish's prefectureRanking config: 'auto' or an explicit override. */
@@ -34,6 +36,8 @@ export interface PrefectureRankingConfig {
   rankCount: RankCountConfig;
   secondsPerRank: number;
   zeroValuesIncluded: boolean;
+  /** Overrides the fish's top-level `source` for this mode only -- use when timeseries.csv and prefecture.csv come from different statistics/sources. */
+  source?: FishSource;
 }
 
 export interface FishSource {

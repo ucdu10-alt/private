@@ -66,7 +66,7 @@ export const FishTimeseriesVideo: React.FC<FishTimeseriesVideoProps> = ({config,
         <ComparisonEnding comparison={resolved.comparison} unit={config.unit} finalHoldFrames={finalHoldFrames} />
       </Sequence>
 
-      <SourceCredit source={config.source} />
+      <SourceCredit source={timeseries.source ?? config.source} />
     </AbsoluteFill>
   );
 };

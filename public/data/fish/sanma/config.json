@@ -12,9 +12,14 @@
     "endingDuration": 3.5,
     "compareFrom": "peak",
     "annotations": [
-      {"year": 2010, "text": "ここから急減"},
-      {"year": 2018, "text": "過去最低水準へ"}
-    ]
+      {"year": 2019, "text": "記録的不漁が始まる"},
+      {"year": 2022, "text": "過去最低を記録"}
+    ],
+    "source": {
+      "name": "全国さんま棒受網漁業協同組合「さんまの水揚量（年）」",
+      "year": "1981〜2025",
+      "url": "https://www.samma.jp/tokei/catch_year.html"
+    }
   },
 
   "prefectureRanking": {

@@ -66,7 +66,7 @@ export const FishPrefectureRankingVideo: React.FC<FishPrefectureRankingVideoProp
         <FinalTopThreeScene top3={resolved.ranked.slice(0, 3)} unit={config.unit} fishName={config.name} />
       </Sequence>
 
-      <SourceCredit source={config.source} />
+      <SourceCredit source={ranking.source ?? config.source} />
     </AbsoluteFill>
   );
 };
