@@ -1,7 +1,7 @@
 import React, {useMemo} from 'react';
 import {AbsoluteFill, Series} from 'remotion';
 import type {RankedPrefecture, ResolvedTheme} from '../data/types';
-import {FINAL_TOP_FIVE_FRAMES, HOOK_FRAMES, PER_PREFECTURE_FRAMES} from '../config/timing';
+import {HOOK_FRAMES, PER_PREFECTURE_FRAMES, resolveFinalTopFiveFrames} from '../config/timing';
 import {COLORS, FONT_FAMILY} from '../config/theme';
 import {computeItemDurations, sumDurations} from '../utils/timeline';
 import {PersistentHeader} from './PersistentHeader';
@@ -56,7 +56,7 @@ export const PrefectureRankingVideo: React.FC<PrefectureRankingVideoProps> = ({t
           <RankingScene theme={theme} orderedRows={orderedRows} perPrefectureFrames={PER_PREFECTURE_FRAMES} />
         </Series.Sequence>
 
-        <Series.Sequence durationInFrames={FINAL_TOP_FIVE_FRAMES}>
+        <Series.Sequence durationInFrames={resolveFinalTopFiveFrames(theme.finalScreenSeconds)}>
           <FinalTopFive theme={theme} />
         </Series.Sequence>
       </Series>

@@ -27,6 +27,22 @@ export type DisplayOrderMode = 'northToSouth' | 'rankAscending';
 export type ValueFormatterId = 'hoursMinutes' | 'decimal1' | 'integer' | 'percent1';
 
 /**
+ * One band of a rank-based pacing curve: prefectures ranked between
+ * `fromRank` and `toRank` (inclusive, `fromRank` is the worse/larger
+ * number) get a duration linearly interpolated between `fromSeconds` and
+ * `toSeconds`. Adjacent bands are expected to share a boundary value so the
+ * pacing feels continuous within the "climb", with an intentional jump
+ * allowed between bands (e.g. a top-3 "climax" band that's deliberately
+ * slower than the band right before it).
+ */
+export interface RankPacingTier {
+  fromRank: number;
+  toRank: number;
+  fromSeconds: number;
+  toSeconds: number;
+}
+
+/**
  * Everything about a theme that is plain, serializable JSON. This is what
  * lives in the theme registry and what survives being passed as a Remotion
  * composition prop (functions can't cross the render/props-serialization
@@ -58,12 +74,23 @@ export interface ThemeMeta {
    * never invents its own commentary.
    */
   reactions?: Record<string, string>;
-  /** Give the very last prefecture in the sweep extra hold time. Defaults to false. */
+  /** Give the very last prefecture in the sweep extra hold time. Defaults to false. Ignored when `pacingByRank` is set. */
   emphasizeFinalItem?: boolean;
+  /**
+   * Per-rank duration curve (see RankPacingTier). When set, this is the
+   * sole source of each prefecture's on-screen time -- `reactions` and
+   * `emphasizeFinalItem` no longer scale duration, since the curve is
+   * expected to already budget enough time to read a reaction line where
+   * one exists (e.g. a slower top-3 band). Falls back to a flat duration
+   * when omitted, same as before.
+   */
+  pacingByRank?: RankPacingTier[];
   /** Heading for the closing ranked list. Defaults to "全国TOP5" if omitted. */
   finalListTitle?: string;
   /** Optional line shown under the closing ranked list. */
   closingLine?: string;
+  /** Overrides how long the closing ranked-list screen stays up. Defaults to timing.ts's FINAL_TOP_FIVE_FRAMES (3s) if omitted. */
+  finalScreenSeconds?: number;
 }
 
 /** A theme with its CSV loaded and rankings computed, ready to render. */

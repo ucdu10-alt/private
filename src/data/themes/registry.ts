@@ -35,12 +35,21 @@ export const THEME_REGISTRY: Record<string, ThemeMeta> = {
     displayOrder: 'rankAscending',
     hookText: '寿司屋が多い県、海沿いが強いと思ってない？',
     reactions: {
-      // Yamanashi is landlocked yet #1 in this dataset -- the reaction and
-      // the "final item" emphasis below land on the same prefecture.
-      山梨県: '海なし県なのに、こんな上位！？',
+      福井県: '北陸勢、強い…！',
+      石川県: '石川も20店超え！',
+      // Yamanashi is landlocked yet #1 in this dataset -- that's the twist.
+      山梨県: '1位、まさかの海なし県！',
     },
-    emphasizeFinalItem: true,
+    // Ranks 47->21 run quick, easing down through the mid-pack, then the
+    // top 3 deliberately slow down as the ranking's climax.
+    pacingByRank: [
+      {fromRank: 47, toRank: 21, fromSeconds: 1.0, toSeconds: 1.2},
+      {fromRank: 20, toRank: 11, fromSeconds: 1.2, toSeconds: 1.4},
+      {fromRank: 10, toRank: 4, fromSeconds: 1.4, toSeconds: 1.6},
+      {fromRank: 3, toRank: 1, fromSeconds: 2.0, toSeconds: 2.5},
+    ],
     finalListTitle: '人口10万人あたりの寿司店数 TOP5',
     closingLine: 'あなたの県は何位だった？',
+    finalScreenSeconds: 5,
   },
 };

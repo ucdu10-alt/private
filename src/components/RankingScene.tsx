@@ -94,7 +94,9 @@ export const RankingScene: React.FC<RankingSceneProps> = ({theme, orderedRows, p
             <MapLegend colorScale={theme.colorScale} valueFormatterId={theme.valueFormatterId} unit={theme.unit} />
           </div>
 
-          {reactionText ? <ReactionBanner text={reactionText} localFrame={localFrame} /> : null}
+          {reactionText ? (
+            <ReactionBanner text={reactionText} localFrame={localFrame} durationInFrames={currentDurationInFrames} />
+          ) : null}
 
           <CurrentPrefecturePanel
             row={currentRow}

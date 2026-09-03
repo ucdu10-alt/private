@@ -8,7 +8,7 @@ Remotion + React + TypeScript で作る、Instagram Reels / TikTok 向け 9:16 �
 
 - 解像度: 1080×1920（9:16 縦型）
 - フレームレート: 30fps
-- 尺: 約39秒（`src/config/timing.ts` の定数を変えるだけで再調整可能）
+- 尺: `sleep-time` は約39秒。`sushi-shops` はランキング上位ほどゆっくり見せる速度カーブと長めのTOP5画面のため約66秒（`src/config/timing.ts` の定数や各テーマの `pacingByRank` / `finalScreenSeconds` で調整可能）
 - 表示順: 北→南の固定順（`src/data/prefectureOrder.ts`）がデフォルト。テーマ側で `displayOrder: 'rankAscending'` を指定すると、ワースト（最下位）→1位のランキング順（カウントダウン形式）に切り替え可能
 - 順位: CSVの `value` から自動計算（手入力しない）
 - タイトル（テーマの問いかけ文）は動画冒頭だけでなく **常に画面上部に表示**
@@ -20,9 +20,10 @@ Remotion + React + TypeScript で作る、Instagram Reels / TikTok 向け 9:16 �
 - 暫定TOP3は画面最下部の細い帯に縮小し、地図より目立たないよう配慮
 - テーマ側の設定で、任意で追加できる演出（すべて省略可・データ駆動、テンプレート側で文言を生成することはない）:
   - `hookText`: 本編開始前に一度だけ表示する短いテロップ
-  - `reactions`: 特定の都道府県名 → リアクション文言。該当県が登場したときだけ大きめのバナーで表示し、表示時間も自動的に延長
-  - `emphasizeFinalItem`: 表示順の最後の1件（ランキング順なら1位）の表示時間を少し延ばす
-  - `finalListTitle` / `closingLine`: 終盤のランキング一覧の見出しと、その下に表示する締めの一言
+  - `pacingByRank`: 順位帯ごとに表示時間を変える速度カーブ（例: 下位はテンポよく、上位・TOP3ほどゆっくり）。省略時は全県一律 `perPrefecture`（既定0.75秒）
+  - `reactions`: 特定の都道府県名 → リアクション文言。地図とも県名/数値のキャプションとも重ならない専用の固定エリア（画面中央よりやや上）に、県の情報が表示されてから少し遅れてバナー表示される
+  - `emphasizeFinalItem` / 通常の表示時間延長: `pacingByRank` を指定しない場合のみ有効な簡易版（最後の1件やリアクション対象県の表示時間を一律で数倍にする）
+  - `finalListTitle` / `closingLine` / `finalScreenSeconds`: 終盤のランキング一覧の見出し・締めの一言・表示時間
 
 ## プロジェクト構造
 
@@ -59,7 +60,7 @@ src/
     formatters.ts             # 数値の表示形式（分→時間分、小数、% など）
     colorScale.ts             # 値に応じた5段階の色分け（少ない=青 〜 多い=赤）
     mapCamera.ts              # 都道府県の位置へ地図カメラをパン&ズームさせる計算
-    timeline.ts               # 表示順ごとの1件あたりの尺（リアクション/最終項目の延長を含む）を計算
+    timeline.ts               # 1件あたりの尺の計算（pacingByRank による順位帯別ペース配分、または簡易延長ロジック）
 
   components/
     PrefectureRankingVideo.tsx # 全体の時間割（フック→本編→TOP5、常時ヘッダー表示）
@@ -69,7 +70,7 @@ src/
     JapanMap.tsx                   # 都道府県ごとに色分け・カメラがパン&ズームする日本地図
     MapLegend.tsx                   # 地図の色分け凡例（地図左上に重ねる小さなオーバーレイ）
     ProgressRail.tsx                 # 地図右端の進行状況バー（北→南、またはランキング順なら順位）
-    ReactionBanner.tsx                 # 特定県だけのリアクションバナー（theme.reactions、省略可）
+    ReactionBanner.tsx                 # 特定県だけのリアクションバナー。画面中央よりやや上の固定位置、県情報より少し遅れて表示（theme.reactions、省略可）
     CurrentPrefecturePanel.tsx          # 県名・数値・全国順位（地図下端に重ねるキャプション）
     TopThreeBoard.tsx                    # 暫定TOP3（画面最下部の細い帯、順位入れ替えアニメーション付き）
     FinalTopFive.tsx                      # 終盤のランキング一覧＋締めの一言
@@ -135,7 +136,7 @@ npx remotion render sushi-shops out/sushi-shops.mp4
 
 CSVには `prefecture,value` の2列以降に検証用の列（例: `sushi-shops.csv` の `store_count`, `population_estimate`）を自由に追加できます。パーサー（`src/utils/csv.ts`）は先頭2列しか読まないので、3列目以降は動画には出ず、データの裏取り用に保持できます。
 
-### ランキング形式（ワースト→1位）とフック・リアクション演出
+### ランキング形式（ワースト→1位）・速度カーブ・フック・リアクション演出
 
 `sushi-shops` テーマ（`src/data/themes/registry.ts`）が実例です:
 
@@ -145,15 +146,24 @@ CSVには `prefecture,value` の2列以降に検証用の列（例: `sushi-shops
   displayOrder: 'rankAscending',   // 47位→1位のカウントダウン表示に切り替え
   hookText: '寿司屋が多い県、海沿いが強いと思ってない？',
   reactions: {
-    山梨県: '海なし県なのに、こんな上位！？',   // その県が登場した時だけ表示、時間も自動延長
+    福井県: '北陸勢、強い…！',
+    石川県: '石川も20店超え！',
+    山梨県: '1位、まさかの海なし県！',   // 該当県の情報が表示された少し後にバナーで表示
   },
-  emphasizeFinalItem: true,        // 表示順の最後の1件（＝1位）の表示時間を少し延ばす
+  // 下位はテンポよく、上位に近づくほど少しずつ、TOP3はさらにゆっくり
+  pacingByRank: [
+    {fromRank: 47, toRank: 21, fromSeconds: 1.0, toSeconds: 1.2},
+    {fromRank: 20, toRank: 11, fromSeconds: 1.2, toSeconds: 1.4},
+    {fromRank: 10, toRank: 4, fromSeconds: 1.4, toSeconds: 1.6},
+    {fromRank: 3, toRank: 1, fromSeconds: 2.0, toSeconds: 2.5},
+  ],
   finalListTitle: '人口10万人あたりの寿司店数 TOP5',
   closingLine: 'あなたの県は何位だった？',
+  finalScreenSeconds: 5,   // 通常の3秒より長めに確保
 },
 ```
 
-いずれも省略可能で、指定しなければ `sleep-time` と同じ挙動（北→南固定順、フックなし、リアクションなし、"全国TOP5"）のままです。`reactions` の文言・対象県は必ずテーマ側（人間）が指定するものとして扱ってください -- テンプレート自身が「〜だから多い」のような理由付けを生成することはありません。
+いずれも省略可能で、指定しなければ `sleep-time` と同じ挙動（北→南固定順、全県一律0.75秒、フックなし、リアクションなし、"全国TOP5"を3秒）のままです。`reactions` の文言・対象県、`pacingByRank` の秒数は必ずテーマ側（人間）が指定するものとして扱ってください -- テンプレート自身が「〜だから多い」のような理由付けや、演出のための数値を生成することはありません。
 
 ## 日本地図データについて
 

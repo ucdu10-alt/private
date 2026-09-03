@@ -1,7 +1,15 @@
 import React from 'react';
 import {Composition} from 'remotion';
 import {PrefectureRankingVideo, PrefectureRankingVideoProps} from './components/PrefectureRankingVideo';
-import {FINAL_TOP_FIVE_FRAMES, FPS, HOOK_FRAMES, PER_PREFECTURE_FRAMES, VIDEO_HEIGHT, VIDEO_WIDTH} from './config/timing';
+import {
+  FINAL_TOP_FIVE_FRAMES,
+  FPS,
+  HOOK_FRAMES,
+  PER_PREFECTURE_FRAMES,
+  resolveFinalTopFiveFrames,
+  VIDEO_HEIGHT,
+  VIDEO_WIDTH,
+} from './config/timing';
 import {loadTheme} from './data/loadTheme';
 import {PREFECTURE_ORDER_NORTH_TO_SOUTH, resolveDisplayOrder} from './data/prefectureOrder';
 import {THEME_REGISTRY} from './data/themes/registry';
@@ -47,7 +55,8 @@ export const RemotionRoot: React.FC = () => {
 
               const hookFrames = theme.hookText ? HOOK_FRAMES : 0;
               const itemDurations = computeItemDurations(orderedRows, theme, PER_PREFECTURE_FRAMES);
-              const durationInFrames = hookFrames + sumDurations(itemDurations) + FINAL_TOP_FIVE_FRAMES;
+              const finalFrames = resolveFinalTopFiveFrames(theme.finalScreenSeconds);
+              const durationInFrames = hookFrames + sumDurations(itemDurations) + finalFrames;
 
               return {
                 durationInFrames,
