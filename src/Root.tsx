@@ -1,62 +1,114 @@
 import React from 'react';
 import {Composition} from 'remotion';
-import {PrefectureRankingVideo, PrefectureRankingVideoProps} from './components/PrefectureRankingVideo';
-import {FINAL_TOP_FIVE_FRAMES, FPS, HOOK_FRAMES, PER_PREFECTURE_FRAMES, VIDEO_HEIGHT, VIDEO_WIDTH} from './config/timing';
-import {loadTheme} from './data/loadTheme';
-import {PREFECTURE_ORDER_NORTH_TO_SOUTH, resolveDisplayOrder} from './data/prefectureOrder';
-import {THEME_REGISTRY} from './data/themes/registry';
-import {computeItemDurations, sumDurations} from './utils/timeline';
+import {FishTimeseriesVideo, FishTimeseriesVideoProps} from './components/timeseries/FishTimeseriesVideo';
+import {
+  FishPrefectureRankingVideo,
+  FishPrefectureRankingVideoProps,
+} from './components/prefectureRanking/FishPrefectureRankingVideo';
+import {
+  FPS,
+  RANKING_DEFAULTS,
+  RANKING_FINAL_TOP_THREE_SECONDS,
+  RANKING_INTRO_DURATION_SECONDS,
+  TIMESERIES_DEFAULTS,
+  TIMESERIES_FINAL_YEAR_HOLD_SECONDS,
+  VIDEO_HEIGHT,
+  VIDEO_WIDTH,
+  secondsToFrames,
+} from './config/timing';
+import {FISH_IDS} from './data/fish/registry';
+import {
+  checkStaticFileExists,
+  loadFishConfig,
+  loadResolvedPrefectureRanking,
+  loadResolvedTimeseries,
+  toStaticPath,
+} from './data/fish/loadFish';
+import {computeRankSlotDurations, sumDurations} from './utils/timelineFrames';
 
 // Rough placeholder used only until calculateMetadata resolves the real
-// theme (ignores hook/reaction timing, which need the loaded CSV) --
-// Remotion requires a durationInFrames up front even though this one gets
-// immediately overridden.
-const PLACEHOLDER_DURATION =
-  PREFECTURE_ORDER_NORTH_TO_SOUTH.length * PER_PREFECTURE_FRAMES + FINAL_TOP_FIVE_FRAMES;
+// fish config/data (Remotion requires a durationInFrames up front even
+// though this gets immediately overridden).
+const PLACEHOLDER_DURATION = FPS * 10;
 
 /**
- * One Composition per registered theme, named after the theme's id (e.g.
- * "sleep-time", "sushi-shops") so each is individually selectable in
- * Remotion Studio and individually renderable by id. Adding a theme to
- * `THEME_REGISTRY` is enough to get a new Composition here -- nothing in
- * this file needs to change.
+ * Two Compositions per fish in FISH_IDS -- "Fish-Timeseries-<id>" and
+ * "Fish-PrefectureRanking-<id>" -- generated from `data/fish/registry.ts`
+ * plus each fish's own `public/data/fish/<id>/config.json`. Adding a fish
+ * species only ever means: drop in its image/config/CSVs and add its id to
+ * the registry -- nothing in this file (or any component) needs to change.
  */
 export const RemotionRoot: React.FC = () => {
   return (
     <>
-      {Object.keys(THEME_REGISTRY).map((themeId) => {
-        const defaultProps: PrefectureRankingVideoProps = {
-          themeId,
-          theme: null,
-          orderedRows: [],
-        };
-
-        return (
-          <Composition<any, PrefectureRankingVideoProps>
-            key={themeId}
-            id={themeId}
-            component={PrefectureRankingVideo}
+      {FISH_IDS.map((fishId) => (
+        <React.Fragment key={fishId}>
+          <Composition<any, FishTimeseriesVideoProps>
+            id={`Fish-Timeseries-${fishId}`}
+            component={FishTimeseriesVideo}
             fps={FPS}
             width={VIDEO_WIDTH}
             height={VIDEO_HEIGHT}
             durationInFrames={PLACEHOLDER_DURATION}
-            defaultProps={defaultProps}
-            calculateMetadata={async ({props}) => {
-              const theme = await loadTheme(props.themeId);
-              const orderedRows = resolveDisplayOrder(theme);
+            defaultProps={{config: null as any, fishImageAvailable: false, resolved: null}}
+            calculateMetadata={async () => {
+              const config = await loadFishConfig(fishId);
+              const fishImageAvailable = await checkStaticFileExists(toStaticPath(config.image));
 
-              const hookFrames = theme.hookText ? HOOK_FRAMES : 0;
-              const itemDurations = computeItemDurations(orderedRows, theme, PER_PREFECTURE_FRAMES);
-              const durationInFrames = hookFrames + sumDurations(itemDurations) + FINAL_TOP_FIVE_FRAMES;
+              if (!config.timeseries?.enabled) {
+                return {
+                  durationInFrames: secondsToFrames(2),
+                  props: {config, fishImageAvailable, resolved: null},
+                };
+              }
 
-              return {
-                durationInFrames,
-                props: {...props, theme, orderedRows},
-              };
+              const resolved = await loadResolvedTimeseries(fishId, config.timeseries);
+              const introFrames = secondsToFrames(config.timeseries.introDuration ?? TIMESERIES_DEFAULTS.introDuration);
+              const timelineFrames = secondsToFrames(
+                config.timeseries.timelineDuration ?? TIMESERIES_DEFAULTS.timelineDuration,
+              );
+              const finalHoldFrames = secondsToFrames(TIMESERIES_FINAL_YEAR_HOLD_SECONDS);
+              const endingFrames = secondsToFrames(config.timeseries.endingDuration ?? TIMESERIES_DEFAULTS.endingDuration);
+              const durationInFrames = introFrames + timelineFrames + finalHoldFrames + endingFrames;
+
+              return {durationInFrames, props: {config, fishImageAvailable, resolved}};
             }}
           />
-        );
-      })}
+
+          <Composition<any, FishPrefectureRankingVideoProps>
+            id={`Fish-PrefectureRanking-${fishId}`}
+            component={FishPrefectureRankingVideo}
+            fps={FPS}
+            width={VIDEO_WIDTH}
+            height={VIDEO_HEIGHT}
+            durationInFrames={PLACEHOLDER_DURATION}
+            defaultProps={{config: null as any, fishImageAvailable: false, resolved: null}}
+            calculateMetadata={async () => {
+              const config = await loadFishConfig(fishId);
+              const fishImageAvailable = await checkStaticFileExists(toStaticPath(config.image));
+
+              if (!config.prefectureRanking?.enabled) {
+                return {
+                  durationInFrames: secondsToFrames(2),
+                  props: {config, fishImageAvailable, resolved: null},
+                };
+              }
+
+              const resolved = await loadResolvedPrefectureRanking(fishId, config.prefectureRanking);
+              const introFrames = secondsToFrames(RANKING_INTRO_DURATION_SECONDS);
+              const slotDurations = computeRankSlotDurations(
+                resolved.rankCount,
+                config.prefectureRanking.secondsPerRank ?? RANKING_DEFAULTS.secondsPerRank,
+              );
+              const countdownFrames = sumDurations(slotDurations);
+              const finalTopThreeFrames = secondsToFrames(RANKING_FINAL_TOP_THREE_SECONDS);
+              const durationInFrames = introFrames + countdownFrames + finalTopThreeFrames;
+
+              return {durationInFrames, props: {config, fishImageAvailable, resolved}};
+            }}
+          />
+        </React.Fragment>
+      ))}
     </>
   );
 };

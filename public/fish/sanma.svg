@@ -1,0 +1,55 @@
+<!-- PLACEHOLDER fish illustration for layout/testing purposes only.
+     Replace with a real AI-generated, photorealistic, transparent-background
+     PNG (same layout rules: side profile, head left, no shadow/background)
+     before publishing an actual video. See public/fish/README.md. -->
+<svg viewBox="0 0 900 300" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="サンマのプレースホルダー画像">
+  <defs>
+    <linearGradient id="body" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#5b7d99" />
+      <stop offset="45%" stop-color="#aebfc9" />
+      <stop offset="100%" stop-color="#e9edf0" />
+    </linearGradient>
+    <linearGradient id="fin" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#3d5468" />
+      <stop offset="100%" stop-color="#6c8598" />
+    </linearGradient>
+  </defs>
+
+  <!-- tail -->
+  <path d="M 780 150 L 895 95 L 860 150 L 895 205 Z" fill="url(#fin)" />
+
+  <!-- body: long slender torpedo shape, head left -->
+  <path
+    d="M 30 150
+       C 30 110, 90 78, 190 66
+       C 330 50, 520 52, 660 78
+       C 730 92, 785 118, 800 150
+       C 785 182, 730 208, 660 222
+       C 520 248, 330 250, 190 234
+       C 90 222, 30 190, 30 150 Z"
+    fill="url(#body)"
+    stroke="#33475a"
+    stroke-width="3"
+  />
+
+  <!-- dark dorsal stripe -->
+  <path
+    d="M 120 96 C 300 74, 520 74, 690 100 C 520 90, 300 90, 120 108 Z"
+    fill="#33475a"
+    opacity="0.55"
+  />
+
+  <!-- small dorsal fin -->
+  <path d="M 470 60 L 510 20 L 545 64 Z" fill="url(#fin)" />
+  <!-- small pectoral fin -->
+  <path d="M 260 150 L 300 200 L 330 158 Z" fill="url(#fin)" opacity="0.9" />
+  <!-- small anal fin -->
+  <path d="M 520 218 L 560 252 L 585 214 Z" fill="url(#fin)" opacity="0.85" />
+
+  <!-- pointed snout, head faces left -->
+  <path d="M 30 150 L 90 132 L 90 168 Z" fill="#3d5468" />
+
+  <!-- eye -->
+  <circle cx="96" cy="140" r="9" fill="#12100d" />
+  <circle cx="93" cy="137" r="2.6" fill="#f8f2e6" />
+</svg>

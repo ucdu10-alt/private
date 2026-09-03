@@ -1,29 +1,32 @@
-import type {PrefectureDataRow} from '../data/types';
+/** One parsed CSV data row plus its 1-based line number in the source file (for error messages). */
+export interface CsvRow {
+  /** Line number in the original file (header is line 1), so validation errors can point at it. */
+  lineNumber: number;
+  cells: Record<string, string>;
+}
 
 /**
- * Minimal parser for the theme data format:
- *
- *   prefecture,value
- *   北海道,455
- *   青森県,478
- *
- * Deliberately not a general-purpose CSV parser (no quoted-field support) --
- * the data files this project reads only ever have two plain numeric/text
- * columns.
+ * Minimal header-based CSV parser: first line is the header, every column
+ * after that is looked up by header name. No quoted-field support -- the
+ * data this project reads is always plain numeric/name columns (years,
+ * tonnages, prefecture names), so a full RFC4180 parser would be
+ * unneeded complexity.
  */
-export const parsePrefectureCsv = (csvText: string): PrefectureDataRow[] => {
-  const lines = csvText.trim().split(/\r?\n/);
-  const [, ...rows] = lines; // drop header row
+export const parseCsv = (csvText: string): CsvRow[] => {
+  const lines = csvText.replace(/^﻿/, '').split(/\r?\n/);
+  const headerLine = lines[0] ?? '';
+  const headers = headerLine.split(',').map((h) => h.trim());
 
-  return rows
-    .map((line) => line.trim())
-    .filter((line) => line.length > 0)
-    .map((line) => {
-      const [prefecture, rawValue] = line.split(',');
-      const value = Number(rawValue);
-      if (!prefecture || Number.isNaN(value)) {
-        throw new Error(`Invalid CSV row: "${line}"`);
-      }
-      return {prefecture: prefecture.trim(), value};
+  const rows: CsvRow[] = [];
+  for (let i = 1; i < lines.length; i += 1) {
+    const raw = lines[i];
+    if (raw === undefined || raw.trim().length === 0) continue;
+    const cellValues = raw.split(',');
+    const cells: Record<string, string> = {};
+    headers.forEach((header, index) => {
+      cells[header] = (cellValues[index] ?? '').trim();
     });
+    rows.push({lineNumber: i + 1, cells});
+  }
+  return rows;
 };

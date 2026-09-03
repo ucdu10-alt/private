@@ -1,78 +1,115 @@
 import type {ColorScale} from '../utils/colorScale';
 
-/** One row of raw input data: a prefecture name and its measured value. */
-export interface PrefectureDataRow {
-  /** Full Japanese prefecture name, e.g. "鹿児島県", "北海道". Must match data/prefectureOrder.ts exactly. */
-  prefecture: string;
-  value: number;
+/**
+ * A single point-change annotation a fish config can supply, e.g.
+ * `{year: 2010, text: "ここから急減"}`. Purely data-driven -- the template
+ * never invents its own commentary.
+ */
+export interface Annotation {
+  year: number;
+  text: string;
 }
 
-/** A row after national ranking has been computed from `value`. */
-export interface RankedPrefecture extends PrefectureDataRow {
-  /** 1 = top of the ranking, per the theme's rankDirection. */
+/** `compareFrom` in a fish's timeseries config: which year to compare the latest year against. */
+export type CompareFrom = 'first' | 'peak' | number;
+
+export interface TimeseriesConfig {
+  enabled: boolean;
+  /** Shown during the intro, e.g. "サンマは昔、どれくらい獲れていた？" */
+  title: string;
+  introDuration: number;
+  timelineDuration: number;
+  endingDuration: number;
+  compareFrom: CompareFrom;
+  annotations: Annotation[];
+}
+
+/** `rankCount` in a fish's prefectureRanking config: 'auto' or an explicit override. */
+export type RankCountConfig = 'auto' | number;
+
+export interface PrefectureRankingConfig {
+  enabled: boolean;
+  /** Shown during the intro, e.g. "サンマが一番獲れる県は？" */
+  title: string;
+  rankCount: RankCountConfig;
+  secondsPerRank: number;
+  zeroValuesIncluded: boolean;
+}
+
+export interface FishSource {
+  name: string;
+  year: string;
+  url: string;
+}
+
+/**
+ * One fish species, loaded from `public/data/fish/<id>/config.json`. This is
+ * the ONLY place fish-specific wording/numbers should live -- components
+ * never hardcode a species name, title, or duration.
+ */
+export interface FishConfig {
+  id: string;
+  name: string;
+  /** Path under /public, e.g. "/fish/sanma.png". */
+  image: string;
+  unit: string;
+  timeseries?: TimeseriesConfig;
+  prefectureRanking?: PrefectureRankingConfig;
+  source: FishSource;
+}
+
+/** One row of `public/data/fish/<id>/timeseries.csv` after parsing/validation. */
+export interface TimeseriesRow {
+  year: number;
+  /** null when the source CSV left this year's value blank (欠損値). */
+  catchTons: number | null;
+}
+
+/** A timeseries row that has an actual value -- what the chart/animation walks through. */
+export interface ValidTimeseriesRow {
+  year: number;
+  catchTons: number;
+}
+
+export interface TimeseriesComparison {
+  fromYear: number;
+  fromValue: number;
+  toYear: number;
+  toValue: number;
+  changePercent: number;
+}
+
+/** A fish's timeseries data, fully loaded/validated/derived -- ready to render. */
+export interface ResolvedTimeseries {
+  rows: ValidTimeseriesRow[];
+  minYear: number;
+  maxYear: number;
+  minValue: number;
+  maxValue: number;
+  peak: ValidTimeseriesRow;
+  peakIndex: number;
+  latest: ValidTimeseriesRow;
+  comparison: TimeseriesComparison;
+}
+
+/** One row of `public/data/fish/<id>/prefecture.csv` after parsing/validation. */
+export interface PrefectureRow {
+  prefecture: string;
+  /** null when the source CSV left this prefecture's value blank (欠損値). */
+  catchTons: number | null;
+}
+
+/** A prefecture row that made it into the ranking (has a usable value). */
+export interface RankedPrefectureRow {
+  prefecture: string;
+  catchTons: number;
   rank: number;
 }
 
-/** Whether a bigger `value` or a smaller `value` counts as "rank 1". */
-export type RankDirection = 'higherIsBetter' | 'lowerIsBetter';
-
-/**
- * How prefectures are ordered on screen. 'northToSouth' (the default) is
- * the geographic sweep from data/prefectureOrder.ts; 'rankAscending' is a
- * countdown from the worst rank up to #1, independent of geography.
- */
-export type DisplayOrderMode = 'northToSouth' | 'rankAscending';
-
-/** Registry of formatters a theme can pick from without embedding functions in props. */
-export type ValueFormatterId = 'hoursMinutes' | 'decimal1' | 'integer' | 'percent1';
-
-/**
- * Everything about a theme that is plain, serializable JSON. This is what
- * lives in the theme registry and what survives being passed as a Remotion
- * composition prop (functions can't cross the render/props-serialization
- * boundary, so formatting is looked up by id instead of stored directly).
- */
-export interface ThemeMeta {
-  id: string;
-  /** Shown for ~1.2s at the very start, e.g. "日本で一番寝ている県は？" */
-  title: string;
-  /** Optional second line under the title, e.g. "あなたの県は何位？" */
-  subtitle?: string;
-  /** Raw unit label used by some formatters, e.g. "分", "店舗", "%" */
-  unit: string;
-  valueFormatterId: ValueFormatterId;
-  rankDirection: RankDirection;
-  /** Small print shown on the final summary screen, e.g. data source / disclaimer */
-  sourceText?: string;
-  /** Path to the CSV inside public/, passed to Remotion's staticFile() */
-  csvPath: string;
-
-  /** Defaults to 'northToSouth' if omitted. */
-  displayOrder?: DisplayOrderMode;
-  /** Optional short teaser shown once, before the sweep starts (skipped entirely if omitted). */
-  hookText?: string;
-  /**
-   * Prefecture name -> a short reaction line. When that prefecture is
-   * current, the line is shown as an extra-prominent banner and the
-   * prefecture gets extra hold time. Purely data-driven -- the template
-   * never invents its own commentary.
-   */
-  reactions?: Record<string, string>;
-  /** Give the very last prefecture in the sweep extra hold time. Defaults to false. */
-  emphasizeFinalItem?: boolean;
-  /** Heading for the closing ranked list. Defaults to "全国TOP5" if omitted. */
-  finalListTitle?: string;
-  /** Optional line shown under the closing ranked list. */
-  closingLine?: string;
-}
-
-/** A theme with its CSV loaded and rankings computed, ready to render. */
-export interface ResolvedTheme extends ThemeMeta {
-  data: PrefectureDataRow[];
-  /** All 47 rows sorted best-to-worst per rankDirection. */
-  ranked: RankedPrefecture[];
-  /** Fast lookup from prefecture name -> its national ranking row. */
-  rankByPrefecture: Record<string, RankedPrefecture>;
-  /** Choropleth color scale (low -> high) derived from this theme's own data. */
+/** A fish's prefecture-ranking data, fully loaded/validated/derived -- ready to render. */
+export interface ResolvedPrefectureRanking {
+  /** rank 1 -> rankCount, best first. */
+  ranked: RankedPrefectureRow[];
+  rankCount: number;
   colorScale: ColorScale;
 }

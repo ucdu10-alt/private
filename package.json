@@ -1,12 +1,12 @@
 {
-  "name": "prefecture-ranking-video",
+  "name": "fish-catch-data-video",
   "version": "1.0.0",
   "private": true,
-  "description": "Remotion template that turns a prefecture -> value CSV/JSON dataset into a 9:16 north-to-south ranking video for Reels/TikTok/Shorts.",
+  "description": "Remotion template that turns a fish species' catch-data (timeseries + prefecture ranking) into 9:16 videos for Reels/TikTok/Shorts.",
   "scripts": {
     "start": "remotion studio",
-    "build": "remotion render sleep-time out/sleep-time.mp4",
-    "build:sushi-shops": "remotion render sushi-shops out/sushi-shops.mp4",
+    "build:timeseries": "remotion render Fish-Timeseries-sanma out/Fish-Timeseries-sanma.mp4",
+    "build:ranking": "remotion render Fish-PrefectureRanking-sanma out/Fish-PrefectureRanking-sanma.mp4",
     "still": "remotion still",
     "upgrade": "remotion upgrade",
     "typecheck": "tsc -noEmit"

@@ -1,23 +1,18 @@
 import React from 'react';
 import type {ColorScale} from '../utils/colorScale';
-import {formatValue} from '../utils/formatters';
-import type {ValueFormatterId} from '../data/types';
 import {COLORS} from '../config/theme';
 
 export interface MapLegendProps {
   colorScale: ColorScale;
-  valueFormatterId: ValueFormatterId;
-  unit: string;
+  formatValue: (value: number) => string;
 }
 
 /**
  * Small "少ない -> 多い" color key so the choropleth coloring on the map is
- * actually readable, not just decorative. Deliberately compact and tucked
- * into a corner -- it's a supporting legend, not a focal point, and now
- * sits as an overlay directly on the map so it carries its own translucent
- * backing to stay legible over whatever color is behind it.
+ * actually readable, not just decorative. Compact and tucked into a
+ * corner, sitting directly on the map with its own translucent backing.
  */
-export const MapLegend: React.FC<MapLegendProps> = ({colorScale, valueFormatterId, unit}) => {
+export const MapLegend: React.FC<MapLegendProps> = ({colorScale, formatValue}) => {
   return (
     <div
       style={{
@@ -52,8 +47,8 @@ export const MapLegend: React.FC<MapLegendProps> = ({colorScale, valueFormatterI
           color: COLORS.textSecondary,
         }}
       >
-        <span>{formatValue(valueFormatterId, colorScale.min, unit)}</span>
-        <span>{formatValue(valueFormatterId, colorScale.max, unit)}</span>
+        <span>{formatValue(colorScale.min)}</span>
+        <span>{formatValue(colorScale.max)}</span>
       </div>
     </div>
   );

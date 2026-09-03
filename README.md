@@ -1,175 +1,172 @@
-# 都道府県ランキング動画テンプレート
+# 日本の魚をデータで見る — 魚種別・漁獲量データ動画テンプレート
 
-Remotion + React + TypeScript で作る、Instagram Reels / TikTok 向け 9:16 縦型動画の自動生成テンプレートです。
+Remotion + React + TypeScript で作る、Instagram Reels / TikTok / YouTube Shorts 向け 9:16 縦型動画の量産テンプレートです。
 
-47都道府県を **北海道から沖縄へ地理的な順番** で1つずつ紹介しながら、日本地図上でハイライトし、各都道府県の **全国順位はデータから自動算出** して表示します。CSVを差し替えるだけで、睡眠時間・通勤時間・飲食店数など別テーマの動画を同じ構造で量産できます。
+魚種ごとに **画像・CSV・config.json を追加するだけ** で、同じ世界観・同じ構成の動画を何十種類でも作れるように設計しています。既存のReactコンポーネントは一切編集不要です。
+
+## 実装済みの2モード
+
+1. **timeseries**（`Fish-Timeseries-<魚種id>`）: 1魚種の全国漁獲量が、取得できる最古年〜最新年までどう変化したかを、伸びていく折れ線グラフで見せる
+2. **prefecture-ranking**（`Fish-PrefectureRanking-<魚種id>`）: 1魚種の都道府県別漁獲量を、下位→1位のカウントダウン形式で見せる（TOP10 / TOP5 / 全件はデータ量から自動判定）
+
+同じ魚種の同じデータセットから、この2本の動画が独立して作れます。
 
 ## 動画仕様
 
-- 解像度: 1080×1920（9:16 縦型）
-- フレームレート: 30fps
-- 尺: 約39秒（`src/config/timing.ts` の定数を変えるだけで再調整可能）
-- 表示順: 北→南の固定順（`src/data/prefectureOrder.ts`）がデフォルト。テーマ側で `displayOrder: 'rankAscending'` を指定すると、ワースト（最下位）→1位のランキング順（カウントダウン形式）に切り替え可能
-- 順位: CSVの `value` から自動計算（手入力しない）
-- タイトル（テーマの問いかけ文）は動画冒頭だけでなく **常に画面上部に表示**
-- レイアウトは **地図が主役**：タイトル直下から画面下部の暫定TOP3ストリップまで、ほぼ全面を地図が占める
-- 地図は都道府県が切り替わるたびに、その都道府県へ **パン&ズーム** する（沖縄は本土から離れているため、専用インセット枠が拡大して強調される）
-- 地図は「まだ登場していない県（グレー）」「登場済みの県（値に応じた5段階の色分け、少ない=青 〜 多い=赤、少し暗め）」「現在の県（白いアウトライン＋発光＋パルスするリングマーカーで一目瞭然）」の3状態＋色分けの凡例付き
-- 県名・値・全国順位は地図下端に重ねた1枚のキャプションにまとめ、視線移動なしで読めるようにした（文字サイズも大きく、表示直後からほぼフル表示）
-- 画面右端に北→南の進行状況を示す縦バー（現在地マーカー付き）
-- 暫定TOP3は画面最下部の細い帯に縮小し、地図より目立たないよう配慮
-- テーマ側の設定で、任意で追加できる演出（すべて省略可・データ駆動、テンプレート側で文言を生成することはない）:
-  - `hookText`: 本編開始前に一度だけ表示する短いテロップ
-  - `reactions`: 特定の都道府県名 → リアクション文言。該当県が登場したときだけ大きめのバナーで表示し、表示時間も自動的に延長
-  - `emphasizeFinalItem`: 表示順の最後の1件（ランキング順なら1位）の表示時間を少し延ばす
-  - `finalListTitle` / `closingLine`: 終盤のランキング一覧の見出しと、その下に表示する締めの一言
+- 解像度: 1080×1920（9:16）/ 30fps
+- 冒頭1.5〜2秒はグラフ・地図より魚画像とタイトルが主役（SNSサムネイルとして単体で成立する構図）
+- シリーズ全体で色・フォント・余白・魚画像の置き方を統一（`src/config/theme.ts`）
+- 魚固有の文言・数値はコンポーネントに一切ハードコードせず、すべて `config.json` / CSV から読む
 
 ## プロジェクト構造
 
 ```
 public/
+  fish/
+    sanma.svg                     # 魚画像（プレースホルダー、後述）
   data/
-    sleep-time.csv          # サンプルテーマのデータ（架空の数値、prefecture,value）
-    sushi-shops.csv         # 実データテーマ（人口10万人あたり寿司店数、e-Stat 2021年6月調査）
-
-scripts/
-  build-map-paths.py        # 地図GeoJSON -> SVGパス変換スクリプト（再生成用）
-  japan.simplified.geojson  # 変換元の簡略化済み地図データ
+    fish/
+      sanma/
+        config.json                # タイトル・尺・比較設定・出典など
+        timeseries.csv              # year,catch_tons
+        prefecture.csv               # prefecture,catch_tons
 
 src/
-  index.ts                  # Remotionのエントリーポイント
-  Root.tsx                  # テーマごとに1つCompositionを自動生成（尺の計算・データ読み込み込み）
+  index.ts / Root.tsx              # FISH_IDS を読み、魚種×モードごとにCompositionを動的生成
 
   config/
-    timing.ts               # 解像度・fps・各パートの長さ（秒）
-    theme.ts                 # 色・フォントなどのデザイントークン
+    timing.ts                       # 解像度・fps・各パートのデフォルト秒数
+    theme.ts                        # 色・フォント・安全マージンなどのデザイントークン
 
   data/
-    types.ts                # ThemeMeta / ResolvedTheme などの型定義
-    prefectureOrder.ts       # 北→南の固定表示順（47件）
-    loadTheme.ts             # CSVを読み込んで順位・配色スケールを計算するローダー
-    themes/
-      registry.ts            # テーマ一覧（タイトル・単位・フォーマット等）
-    geo/
-      japanPaths.ts          # 都道府県ごとのSVGパス＋バウンディングボックス（自動生成、手編集禁止）
+    types.ts                        # FishConfig / ResolvedTimeseries / ResolvedPrefectureRanking 等の型
+    prefectures.ts                  # 47都道府県の正式名称（バリデーション用）
+    geo/japanPaths.ts               # 都道府県ごとのSVGパス（地図、自動生成・手編集禁止）
+    fish/
+      registry.ts                    # FISH_IDS = ['sanma'] -- 魚種を追加する唯一の"コード"変更点
+      loadFish.ts                     # config.json / CSV の読み込み・検証・集計（ピーク検出、比較、ランキング等）
 
   utils/
-    csv.ts                   # prefecture,value 形式のCSVパーサー
-    ranking.ts                # 全国順位 / 暫定TOP3の計算ロジック
-    formatters.ts             # 数値の表示形式（分→時間分、小数、% など）
-    colorScale.ts             # 値に応じた5段階の色分け（少ない=青 〜 多い=赤）
-    mapCamera.ts              # 都道府県の位置へ地図カメラをパン&ズームさせる計算
-    timeline.ts               # 表示順ごとの1件あたりの尺（リアクション/最終項目の延長を含む）を計算
+    csv.ts                          # ヘッダー付きCSVの汎用パーサー
+    validation.ts                   # timeseries.csv / prefecture.csv の行単位バリデーション（エラーに行番号付き）
+    formatters.ts                   # 数値表示（3桁区切り、年、増減率など）
+    peak.ts / compare.ts            # ピーク自動検出 / compareFrom(first・peak・年指定)の比較計算
+    rankingAuto.ts                  # TOP10/TOP5/全件の自動判定・ランキング計算
+    timelineFrames.ts               # 順位カウントダウンの尺配分（frame⇄順位の相互変換）
+    colorScale.ts / mapCamera.ts    # 地図の色分け・パン&ズームカメラ計算（既存の地図エンジンを流用）
 
   components/
-    PrefectureRankingVideo.tsx # 全体の時間割（フック→本編→TOP5、常時ヘッダー表示）
-    PersistentHeader.tsx        # 常に画面上部に表示されるタイトル
-    HookIntro.tsx                # 本編開始前の短いテロップ（theme.hookText、省略可）
-    RankingScene.tsx              # 本編：フレーム→現在の都道府県を算出する中枢、地図中心のレイアウト
-    JapanMap.tsx                   # 都道府県ごとに色分け・カメラがパン&ズームする日本地図
-    MapLegend.tsx                   # 地図の色分け凡例（地図左上に重ねる小さなオーバーレイ）
-    ProgressRail.tsx                 # 地図右端の進行状況バー（北→南、またはランキング順なら順位）
-    ReactionBanner.tsx                 # 特定県だけのリアクションバナー（theme.reactions、省略可）
-    CurrentPrefecturePanel.tsx          # 県名・数値・全国順位（地図下端に重ねるキャプション）
-    TopThreeBoard.tsx                    # 暫定TOP3（画面最下部の細い帯、順位入れ替えアニメーション付き）
-    FinalTopFive.tsx                      # 終盤のランキング一覧＋締めの一言
-    RankPill.tsx                           # 順位の丸バッジ（共通パーツ）
+    JapanMap.tsx / MapLegend.tsx     # 都道府県ハイライト地図（既存の地図テンプレートを流用）
+    common/
+      SeriesBackdrop.tsx              # シリーズ共通の背景
+      FishImage.tsx                    # 魚画像 or 名前だけのフォールバック
+      IntroTitleScene.tsx               # 冒頭1.5〜2秒（魚画像+魚種名+タイトル）
+      PersistentHeader.tsx               # 本編中ずっと出る小さいヘッダー
+      BigStat.tsx / SourceCredit.tsx      # 大きい数字表示 / 出典クレジット
+      DisabledModeNotice.tsx               # config でモードが無効な場合の表示
+    timeseries/
+      FishTimeseriesVideo.tsx          # モード1の時間割
+      LineChartScene.tsx                # 年ごとに伸びる折れ線グラフ本体
+      PeakBadge.tsx / AnnotationCallout.tsx  # ピーク吹き出し / config.annotations の吹き出し
+      ComparisonEnding.tsx              # 最新年ホールド→比較（○年→○年 約◯%減）
+    prefectureRanking/
+      FishPrefectureRankingVideo.tsx   # モード2の時間割
+      RankRevealScene.tsx               # 各順位: 順位バッジ・県名・値・地図
+      FinalTopThreeScene.tsx            # 締めのTOP3まとめ
+      RankPill.tsx                      # 順位の丸バッジ
 ```
 
-## 動かし方
+## 起動方法
 
 ```bash
 npm install
-npm start          # Remotion Studio が起動（ブラウザでプレビュー・スクラブ再生）
+npm start          # Remotion Studio 起動（ブラウザでプレビュー・スクラブ再生）
 ```
 
-Studio左のCompositions一覧に、テーマごとに `sleep-time` / `sushi-shops` のようにテーマIDそのものの名前で並びます（`src/data/themes/registry.ts` にエントリを足すだけで一覧に増えます）。
-
-書き出す場合はComposition名を指定してレンダリングします:
-
-```bash
-npx remotion render sleep-time out/sleep-time.mp4
-npx remotion render sushi-shops out/sushi-shops.mp4
-```
-
-`npm run build`（sleep-time）/ `npm run build:sushi-shops` でも同じことができます。
+Studio左のCompositions一覧に `Fish-Timeseries-sanma` / `Fish-PrefectureRanking-sanma` が並びます。
 
 ### このサンドボックス環境について
 
-このサンドボックスは Remotion 標準の Headless Chrome ダウンロード先 (`remotion.media`) への通信がブロックされているため、代わりに Playwright 同梱の Chromium を使うように `remotion.config.ts` で `REMOTION_BROWSER_EXECUTABLE` 環境変数を見るようにしてあります。通常の開発マシンでは何も設定せずに `npm start` / `npm run build` がそのまま動きます。
+Remotion標準のChrome Headless Shellダウンロード先への通信がブロックされているため、Playwright同梱のChromiumを使うよう `remotion.config.ts` で `REMOTION_BROWSER_EXECUTABLE` を見るようにしてあります。レンダリング（`remotion render` / `remotion still`）には new Headless モード対応のビルドが必要なため、`chromium_headless_shell` を指定してください:
 
-## データの差し替え方（別テーマを作る）
-
-新しいテーマ（例: 通勤時間、飲食店数など）を追加する手順:
-
-1. `public/data/<テーマ名>.csv` を作成し、`prefecture,value` の2列で47行分のデータを入れる
-
-   ```csv
-   prefecture,value
-   北海道,455
-   青森県,478
-   ...
-   ```
-
-   - `prefecture` は `src/data/prefectureOrder.ts` の表記（例: `鹿児島県`, `北海道`）と完全一致させること
-   - `value` は数値。順位はここから自動計算されるので手入力しない
-
-2. `src/data/themes/registry.ts` にエントリを追加
-
-   ```ts
-   'commute-time': {
-     id: 'commute-time',
-     title: '通勤時間が一番長い県は？',
-     subtitle: 'あなたの県は何位？',
-     unit: '分',
-     valueFormatterId: 'hoursMinutes',   // 455 -> "7時間35分" のような変換
-     rankDirection: 'higherIsBetter',    // 値が大きいほど1位なら higherIsBetter
-     sourceText: '出典: ○○調査（20XX年）',
-     csvPath: 'data/commute-time.csv',
-   },
-   ```
-
-これだけで `sleep-time` / `sushi-shops` と同様に `commute-time` という名前のComposition（`npx remotion render commute-time ...`）としてStudioにも一覧にも現れます。`Root.tsx` を編集する必要はありません。数値のフォーマットが既存の4種（`hoursMinutes` / `decimal1` / `integer` / `percent1`）で足りない場合のみ、`src/utils/formatters.ts` に関数を1つ追加し、`ValueFormatterId`（`src/data/types.ts`）にIDを足してください。
-
-地図の色分け（少ない=青 〜 多い=赤の5段階）は `src/utils/colorScale.ts` がCSVの実データから分位点（20/40/60/80パーセンタイル）を自動計算するので、テーマごとに設定する必要はありません。
-
-CSVには `prefecture,value` の2列以降に検証用の列（例: `sushi-shops.csv` の `store_count`, `population_estimate`）を自由に追加できます。パーサー（`src/utils/csv.ts`）は先頭2列しか読まないので、3列目以降は動画には出ず、データの裏取り用に保持できます。
-
-### ランキング形式（ワースト→1位）とフック・リアクション演出
-
-`sushi-shops` テーマ（`src/data/themes/registry.ts`）が実例です:
-
-```ts
-'sushi-shops': {
-  ...
-  displayOrder: 'rankAscending',   // 47位→1位のカウントダウン表示に切り替え
-  hookText: '寿司屋が多い県、海沿いが強いと思ってない？',
-  reactions: {
-    山梨県: '海なし県なのに、こんな上位！？',   // その県が登場した時だけ表示、時間も自動延長
-  },
-  emphasizeFinalItem: true,        // 表示順の最後の1件（＝1位）の表示時間を少し延ばす
-  finalListTitle: '人口10万人あたりの寿司店数 TOP5',
-  closingLine: 'あなたの県は何位だった？',
-},
+```bash
+export REMOTION_BROWSER_EXECUTABLE=/opt/pw-browsers/chromium_headless_shell-<version>/chrome-linux/headless_shell
 ```
 
-いずれも省略可能で、指定しなければ `sleep-time` と同じ挙動（北→南固定順、フックなし、リアクションなし、"全国TOP5"）のままです。`reactions` の文言・対象県は必ずテーマ側（人間）が指定するものとして扱ってください -- テンプレート自身が「〜だから多い」のような理由付けを生成することはありません。
+通常の開発マシンでは何も設定せずに `npm start` / render がそのまま動きます。
+
+## サンマのサンプルデータについて
+
+`public/data/fish/sanma/` の中身は **すべて仮のサンプルデータ**です（`config.json` の `source.name` にも明記）。timeseries.csv は1980〜2024年の45年分、prefecture.csv は12県分（うち0値1件・欠損1件を含む、バリデーション/自動判定の動作確認用）。実データに差し替える際は下記の「データの差し替え方」を参照してください。
+
+魚画像 `public/fish/sanma.svg` も**レイアウト確認用のプレースホルダー**です（写実的なAI生成画像ではありません）。実運用では `public/fish/<魚種id>.png` に、写実的・背景透過・真横・頭は左向きの画像を配置してください。画像が存在しない場合でもエラーにならず、魚名だけのフォールバック表示になります（`checkStaticFileExists` で存在確認した上で分岐しているので、`<img>` の onError には依存していません）。
+
+## データ・configの差し替え方（既存魚種のデータ更新）
+
+`public/data/fish/sanma/` の3ファイルを実データで上書きするだけです。コンポーネントは触りません。
+
+- `timeseries.csv`: `year,catch_tons` の2列。取得できる最古年〜最新年まで全年入れてください（間引き不要、グラフ側で自動的に間引いて軸ラベル表示します）。値が欠損している年は `catch_tons` を空欄にすればOK（欠損値として扱われ、グラフはその年をスキップします）
+- `prefecture.csv`: `prefecture,catch_tons` の2列。都道府県名は `src/data/prefectures.ts` の表記と完全一致させてください。0件/未収録の県は行ごと省略するか `catch_tons` を `0` または空欄にできます
+- `config.json`: タイトル文言・尺・`compareFrom`・`annotations`・`rankCount`・`zeroValuesIncluded`・出典など
+
+## 新しい魚種の追加方法
+
+例: 「サバ」を追加する場合
+
+1. `public/fish/saba.png` を追加（写実的・背景透過・真横・頭は左向き。無くても動きます）
+2. `public/data/fish/saba/config.json` を作成（`sanma/config.json` をコピーして書き換え）
+3. `public/data/fish/saba/timeseries.csv` と `prefecture.csv` を追加
+4. `src/data/fish/registry.ts` の `FISH_IDS` に `'saba'` を追加
+
+これだけで Studio に `Fish-Timeseries-saba` / `Fish-PrefectureRanking-saba` が自動的に現れます。**既存の魚種（サンマ）のファイルは上書きしないでください** -- 新しいディレクトリを追加するだけです。
+
+`config.json` のどちらかのモードだけ有効化することもできます（`timeseries.enabled` / `prefectureRanking.enabled` を `false` に）。無効化したモードのCompositionは残りますが、レンダリングすると「モードが無効化されています」という短い静止画になります。
+
+## データの検証
+
+`timeseries.csv` / `prefecture.csv` は Composition読み込み時（`calculateMetadata`）に自動検証されます（`src/utils/validation.ts`）。問題がある場合は該当行を含む `DataValidationError` が投げられ、Studioやレンダリングログにどの行の何が悪いかがそのまま表示されます。チェック内容:
+
+- **timeseries.csv**: year が数値か / 重複していないか、catch_tons が数値か（空欄は欠損値として許容）。読み込み後は年昇順にソートされます
+- **prefecture.csv**: 都道府県名が47都道府県の正式名称と一致するか / 重複していないか、catch_tons が数値か（空欄は欠損値として許容、0はランキング対象外がデフォルトだが `zeroValuesIncluded: true` で含められる）
+
+## ランキング件数の自動判定
+
+`prefectureRanking.rankCount: "auto"` のとき、有効な（欠損でない、かつ0値を除外設定なら0でない）都道府県数から自動判定します（`src/utils/rankingAuto.ts`）:
+
+- 10件以上 → TOP10
+- 5〜9件 → TOP5
+- 1〜4件 → 全件表示
+
+数値を直接指定する（例 `"rankCount": 7`）ことも可能です。
+
+## 動画のレンダリング方法
+
+```bash
+npx remotion render Fish-Timeseries-sanma out/sanma-timeseries.mp4
+npx remotion render Fish-PrefectureRanking-sanma out/sanma-ranking.mp4
+```
+
+`npm run build:timeseries` / `npm run build:ranking` でも同じことができます（サンマ固定）。他の魚種は Composition名を `Fish-Timeseries-<id>` に読み替えてください。
+
+## 出典表示
+
+各動画の下部に小さく `出典：{source.name}（{source.year}）` を常時表示します。`source.url` は動画には出さず、データ側の保持のみです。
 
 ## 日本地図データについて
 
-`src/data/geo/japanPaths.ts` は手編集しないでください。元データは [dataofjapan/land](https://github.com/dataofjapan/land) の GeoJSON を [mapshaper](https://github.com/mbloch/mapshaper) で簡略化し、`scripts/build-map-paths.py` で SVG パスへ投影・変換したものです。各都道府県のバウンディングボックスもここで一緒に計算され、`JapanMap.tsx` のパン&ズームカメラ（`src/utils/mapCamera.ts`）がそれを使って各都道府県にフレーミングします。沖縄は本土から地理的に離れているため、本土とは別の小さな枠（インセット）に個別投影し、表示中はそのインセット自体が拡大されます。地図を再生成する場合:
+`src/data/geo/japanPaths.ts` は手編集しないでください。[dataofjapan/land](https://github.com/dataofjapan/land) のGeoJSONを[mapshaper](https://github.com/mbloch/mapshaper)で簡略化し、`scripts/build-map-paths.py` でSVGパスへ変換したものです（都道府県ランキングテンプレートから流用）。再生成する場合:
 
 ```bash
 cd scripts
 python3 build-map-paths.py
 ```
 
-## 次に改善すべき点
+## 次に改善すべきポイント
 
-- **デザインの作り込み**: 現状は視認性優先の仮デザイン。フォント・余白・配色の最終調整、ロゴ/クレジット表示など
-- **地図の見せ方**: 「まだ登場していない県」の濃淡や、地方ブロック単位のラベル表示など、地図単体でも状況が伝わる工夫
-- **暫定TOP3が3県に満たない序盤の挙動**: 現状は1〜2件でもそのまま表示されるが、専用の見せ方（スロットを埋める演出など）を検討してもよい
-- **BGM・効果音**: `@remotion/media` などで都道府県切り替え時の軽いSE、TOP3更新時のSEを追加
-- **複数テーマの一括レンダリング**: 現状はComposition名ごとに1コマンドずつ実行が必要。`THEME_REGISTRY` を読んで全テーマを順にレンダリングするスクリプト化
-- **sleep-time のデータ差し替え**: `sleep-time.csv` は仮の架空データのまま（`sourceText` で明記済み）。`sushi-shops.csv`（e-Stat 2021年6月調査）と同じ要領で実データに差し替え可能
-- **アクセシビリティ的な補助**: 色覚多様性を考慮した配色チェック（現在の黄色/青/グレーの組み合わせは概ね安全だが再確認推奨）
+- **実際のAI生成魚画像への差し替え**: `public/fish/sanma.svg` は簡易プレースホルダー。写実的な透過PNGに差し替える
+- **prefecture-ranking の地図カメラ**: 現状は都道府県スイープ用に作られたパン&ズームをそのまま流用しており、ランキングは地理的に隣接しない県へジャンプするため、ズームがやや控えめ（`cameraRectForBBox` の `minSizeFraction`）。順位ごとにもっと寄ったカメラにする、沖縄インセットと北海道表示が同時に画面右上で近接するケースの見た目を調整する、など
+- **BGM・SE**: 現状は完全無音。`@remotion/media` 等で順位切り替え時のSE、ピーク到達時のSEを追加しやすい構造にはなっている（Sequence単位で差し込むだけ）
+- **複数魚種・複数モードの一括レンダリング**: 現状はComposition名ごとに1コマンドずつ実行が必要。`FISH_IDS` を読んで全魚種×全モードを順にレンダリングするスクリプト化
+- **デザインの作り込み**: 現状は視認性優先の仮デザイン（Phase 1）。フォント・余白・配色の最終調整、ロゴ表示など
+- **timeseries.csv の欠損値の扱い**: 現状は欠損年をチャートの点として単純にスキップ（線がその年をまたいで隣の実データ点へ直接つながる）。「欠損期間は線を薄く/破線にする」等、より丁寧な表現も検討可
+- **アクセシビリティ**: 色覚多様性を考慮した配色チェック（現状の5段階配色は既存テンプレートからの流用、再確認推奨）
