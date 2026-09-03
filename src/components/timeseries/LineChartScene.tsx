@@ -149,7 +149,7 @@ export const LineChartScene: React.FC<LineChartSceneProps> = ({
               y={PLOT.y + PLOT.height + 40}
               textAnchor="middle"
               fontFamily={FONT_FAMILY}
-              fontSize={26}
+              fontSize={30}
               fill={COLORS.chartAxisLabel}
             >
               {year}

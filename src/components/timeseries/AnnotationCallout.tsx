@@ -24,10 +24,10 @@ export const AnnotationCallout: React.FC<AnnotationCalloutProps> = ({text, opaci
         border: `1.5px solid ${COLORS.annotationBorder}`,
         color: COLORS.textPrimary,
         borderRadius: RADIUS.sm,
-        padding: '10px 18px',
+        padding: '14px 24px',
         fontFamily: FONT_FAMILY,
         fontWeight: 700,
-        fontSize: 24,
+        fontSize: 34,
         whiteSpace: 'nowrap',
         boxShadow: '0 6px 20px rgba(0,0,0,0.4)',
       }}

@@ -23,10 +23,10 @@ export const PeakBadge: React.FC<PeakBadgeProps> = ({opacity, leftPercent, topPe
         background: COLORS.peakBadgeBackground,
         color: COLORS.peakBadgeText,
         borderRadius: RADIUS.md,
-        padding: '10px 20px',
+        padding: '16px 28px',
         fontFamily: FONT_FAMILY_DISPLAY,
         fontWeight: 800,
-        fontSize: 26,
+        fontSize: 38,
         whiteSpace: 'nowrap',
         boxShadow: '0 8px 24px rgba(0,0,0,0.35)',
       }}

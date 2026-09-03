@@ -19,19 +19,19 @@ export const MapLegend: React.FC<MapLegendProps> = ({colorScale, formatValue}) =
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'flex-start',
-        gap: 3,
+        gap: 5,
         background: 'rgba(6, 10, 20, 0.6)',
-        borderRadius: 8,
-        padding: '6px 8px',
+        borderRadius: 10,
+        padding: '10px 12px',
       }}
     >
-      <div style={{display: 'flex', gap: 2}}>
+      <div style={{display: 'flex', gap: 3}}>
         {colorScale.colors.map((color, i) => (
           <div
             key={color}
             style={{
-              width: 18,
-              height: 8,
+              width: 26,
+              height: 14,
               background: color,
               borderRadius: i === 0 ? '4px 0 0 4px' : i === colorScale.colors.length - 1 ? '0 4px 4px 0' : 0,
             }}
@@ -42,8 +42,9 @@ export const MapLegend: React.FC<MapLegendProps> = ({colorScale, formatValue}) =
         style={{
           display: 'flex',
           justifyContent: 'space-between',
-          width: 18 * colorScale.colors.length + 2 * (colorScale.colors.length - 1),
-          fontSize: 11,
+          width: 26 * colorScale.colors.length + 3 * (colorScale.colors.length - 1),
+          fontSize: 18,
+          fontWeight: 600,
           color: COLORS.textSecondary,
         }}
       >
