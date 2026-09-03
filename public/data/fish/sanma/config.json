@@ -25,14 +25,19 @@
   "prefectureRanking": {
     "enabled": true,
     "title": "サンマが一番獲れる県は？",
-    "rankCount": "auto",
+    "rankCount": 7,
     "secondsPerRank": 1.3,
-    "zeroValuesIncluded": false
+    "zeroValuesIncluded": false,
+    "source": {
+      "name": "農林水産省「漁業・養殖業生産統計」",
+      "year": "2023",
+      "url": "https://region-case.com/rank-r5-product-saury/"
+    }
   },
 
   "source": {
-    "name": "サンプルデータ（デモ用の架空の数値です・実データではありません）",
-    "year": "2024",
+    "name": "農林水産省「漁業・養殖業生産統計」",
+    "year": "2023",
     "url": ""
   }
 }
