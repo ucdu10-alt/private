@@ -25,7 +25,7 @@ export const THEME_REGISTRY: Record<string, ThemeMeta> = {
   },
   'sushi-shops': {
     id: 'sushi-shops',
-    title: '寿司屋が多い県はどこ？',
+    title: '人口10万人あたり 寿司屋が多い県はどこ？',
     subtitle: '人口10万人あたりの寿司店数',
     unit: '店 / 10万人',
     valueFormatterId: 'decimal1',
