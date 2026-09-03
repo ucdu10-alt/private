@@ -16,9 +16,11 @@ export interface CurrentPrefecturePanelProps {
 
 /**
  * The name / value / national-rank readout for whichever prefecture is
- * currently in the spotlight. Animates in on each prefecture change: a
- * quick fade+slide for the name, a short count-up for the value, and a
- * slightly delayed fade for the rank badge.
+ * currently in the spotlight, overlaid directly on the bottom edge of the
+ * map (a "lower third") so a viewer's eyes never have to leave the map
+ * area to read it. Text reaches full size/opacity almost immediately on
+ * each prefecture change -- even a half-second glance should be enough to
+ * read the name and rank -- then just holds still.
  */
 export const CurrentPrefecturePanel: React.FC<CurrentPrefecturePanelProps> = ({
   row,
@@ -29,19 +31,18 @@ export const CurrentPrefecturePanel: React.FC<CurrentPrefecturePanelProps> = ({
 }) => {
   useVideoConfig();
 
-  const nameOpacity = interpolate(localFrame, [0, 6], [0, 1], {
+  const inOpacity = interpolate(localFrame, [0, 3], [0, 1], {
     extrapolateLeft: 'clamp',
     extrapolateRight: 'clamp',
   });
-  const nameTranslateY = interpolate(localFrame, [0, 6], [14, 0], {
+  const inTranslateY = interpolate(localFrame, [0, 4], [10, 0], {
     extrapolateLeft: 'clamp',
     extrapolateRight: 'clamp',
   });
 
-  // Keep the count-up/rank-reveal short relative to how long the
-  // prefecture stays on screen, so most of its time on screen is spent
-  // holding still and readable rather than mid-animation.
-  const countEnd = Math.max(2, Math.min(8, durationInFrames - 10));
+  // Keep the count-up short relative to how long the prefecture stays on
+  // screen, so most of its time on screen is spent holding still.
+  const countEnd = Math.max(2, Math.min(6, durationInFrames - 12));
   const countProgress = interpolate(localFrame, [0, countEnd], [0, 1], {
     extrapolateLeft: 'clamp',
     extrapolateRight: 'clamp',
@@ -49,58 +50,58 @@ export const CurrentPrefecturePanel: React.FC<CurrentPrefecturePanelProps> = ({
   const displayedValue = row.value * countProgress;
   const formattedValue = formatValue(theme.valueFormatterId, displayedValue, theme.unit);
 
-  const rankOpacity = interpolate(localFrame, [countEnd, countEnd + 5], [0, 1], {
-    extrapolateLeft: 'clamp',
-    extrapolateRight: 'clamp',
-  });
-
   return (
     <div
       style={{
+        position: 'absolute',
+        left: 0,
+        right: 0,
+        bottom: 0,
+        opacity: inOpacity,
+        transform: `translateY(${inTranslateY}px)`,
+        background:
+          'linear-gradient(to top, rgba(6, 10, 20, 0.92) 0%, rgba(6, 10, 20, 0.82) 55%, rgba(6, 10, 20, 0) 100%)',
+        padding: '54px 30px 22px',
         display: 'flex',
         flexDirection: 'column',
-        alignItems: 'center',
-        gap: 6,
-        padding: '18px 0 10px',
+        gap: 8,
       }}
     >
-      <div style={{fontSize: 20, color: COLORS.textSecondary}}>
-        {progress.index} / {progress.total}
+      <div style={{display: 'flex', alignItems: 'baseline', justifyContent: 'space-between'}}>
+        <div style={{fontSize: 88, fontWeight: 900, color: COLORS.textPrimary, lineHeight: 1}}>
+          {row.prefecture}
+        </div>
+        <div style={{fontSize: 22, color: COLORS.textSecondary, fontVariantNumeric: 'tabular-nums'}}>
+          {progress.index} / {progress.total}
+        </div>
       </div>
-      <div
-        style={{
-          fontSize: 64,
-          fontWeight: 800,
-          color: COLORS.textPrimary,
-          opacity: nameOpacity,
-          transform: `translateY(${nameTranslateY}px)`,
-        }}
-      >
-        {row.prefecture}
-      </div>
-      <div
-        style={{
-          fontSize: 84,
-          fontWeight: 900,
-          color: COLORS.accent,
-          fontVariantNumeric: 'tabular-nums',
-          lineHeight: 1.1,
-        }}
-      >
-        {formattedValue}
-      </div>
-      <div
-        style={{
-          opacity: rankOpacity,
-          background: COLORS.rankBadge,
-          color: '#2a0d0d',
-          fontWeight: 800,
-          fontSize: 30,
-          padding: '6px 22px',
-          borderRadius: 999,
-        }}
-      >
-        全国{row.rank}位
+
+      <div style={{display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16}}>
+        <div
+          style={{
+            fontSize: 76,
+            fontWeight: 900,
+            color: COLORS.accent,
+            fontVariantNumeric: 'tabular-nums',
+            lineHeight: 1,
+          }}
+        >
+          {formattedValue}
+        </div>
+        <div
+          style={{
+            flexShrink: 0,
+            background: COLORS.rankBadge,
+            color: '#2a0d0d',
+            fontWeight: 900,
+            fontSize: 46,
+            padding: '8px 26px',
+            borderRadius: 999,
+            whiteSpace: 'nowrap',
+          }}
+        >
+          全国{row.rank}位
+        </div>
       </div>
     </div>
   );

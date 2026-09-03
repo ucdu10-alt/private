@@ -2,7 +2,6 @@ import React from 'react';
 import {spring, useCurrentFrame, useVideoConfig} from 'remotion';
 import {
   MAIN_MAP_BBOX,
-  MAIN_MAP_VIEWBOX,
   OKINAWA_INSET_VIEWBOX,
   PREFECTURE_PATHS,
 } from '../data/geo/japanPaths';
@@ -37,6 +36,11 @@ const PATH_BY_NAME = new Map(PREFECTURE_PATHS.map((p) => [p.nameJa, p]));
  * frame whichever prefecture is current -- so the map visibly "travels"
  * north to south instead of just recoloring a static silhouette.
  *
+ * The current prefecture needs to read as "the one" at a single glance, even
+ * sitting among a field of already-colored neighbors, so it gets three
+ * reinforcing cues: everything else is dimmed slightly, it alone gets a
+ * bright outline + glow, and a pulsing ring marks its center.
+ *
  * Okinawa lives in a separate inset box (see japanPaths.ts for why); while
  * it's the current prefecture the main map camera zooms back out to a full
  * view and the inset box itself pops up larger instead.
@@ -53,6 +57,9 @@ export const JapanMap: React.FC<JapanMapProps> = ({
   const {fps} = useVideoConfig();
 
   const pulse = 0.65 + 0.35 * Math.sin(frame / 6);
+  // A second, slower pulse purely for the current-prefecture marker ring,
+  // so it visibly breathes rather than just sitting there.
+  const ringPulse = (Math.sin(frame / 10) + 1) / 2; // 0..1
 
   const currentEntry = PATH_BY_NAME.get(currentPrefectureName);
   const previousEntry = previousPrefectureName ? PATH_BY_NAME.get(previousPrefectureName) : undefined;
@@ -85,6 +92,28 @@ export const JapanMap: React.FC<JapanMapProps> = ({
     return colorByName.get(nameJa) ?? COLORS.mapRevealed;
   };
 
+  // Revealed-but-not-current prefectures are dimmed so the current one pops
+  // by contrast even though it shares the same choropleth coloring style.
+  const fillOpacityFor = (nameJa: string, isCurrent: boolean): number => {
+    if (isCurrent) return 1;
+    if (revealedNames.has(nameJa)) return 0.5;
+    return 1;
+  };
+
+  const currentRingMarker = currentEntry ? (
+    <g style={{pointerEvents: 'none'}}>
+      <circle
+        cx={(currentEntry.bbox[0] + currentEntry.bbox[2]) / 2}
+        cy={(currentEntry.bbox[1] + currentEntry.bbox[3]) / 2}
+        r={10 + ringPulse * 6}
+        fill="none"
+        stroke={COLORS.mapCurrent}
+        strokeWidth={2}
+        opacity={0.9 - ringPulse * 0.5}
+      />
+    </g>
+  ) : null;
+
   return (
     <div style={{position: 'relative', width: '100%', height: '100%'}}>
       <svg
@@ -100,23 +129,25 @@ export const JapanMap: React.FC<JapanMapProps> = ({
               key={p.jisCode}
               d={p.path}
               fill={fillFor(p.nameJa)}
-              stroke={COLORS.mapStroke}
-              strokeWidth={isCurrent ? 2.5 : 1}
+              fillOpacity={fillOpacityFor(p.nameJa, isCurrent)}
+              stroke={isCurrent ? '#ffffff' : COLORS.mapStroke}
+              strokeWidth={isCurrent ? 4 : 1}
               style={
                 isCurrent
-                  ? {filter: `drop-shadow(0 0 ${10 + pulse * 10}px ${COLORS.mapCurrent})`}
+                  ? {filter: `drop-shadow(0 0 ${14 + pulse * 14}px ${COLORS.mapCurrent})`}
                   : undefined
               }
             />
           );
         })}
+        {!isCurrentInset ? currentRingMarker : null}
       </svg>
 
       <div
         style={{
           position: 'absolute',
-          left: 8,
-          bottom: 8,
+          right: 8,
+          top: 8,
           width: 108,
           height: 82,
           background: 'rgba(255, 255, 255, 0.04)',
@@ -124,7 +155,7 @@ export const JapanMap: React.FC<JapanMapProps> = ({
           borderRadius: 10,
           padding: '3px 4px',
           transform: `scale(${insetScale})`,
-          transformOrigin: 'bottom left',
+          transformOrigin: 'top right',
         }}
       >
         <div style={{fontSize: 11, color: COLORS.textSecondary, lineHeight: 1}}>沖縄</div>
@@ -136,8 +167,9 @@ export const JapanMap: React.FC<JapanMapProps> = ({
                 key={p.jisCode}
                 d={p.path}
                 fill={fillFor(p.nameJa)}
-                stroke={COLORS.mapStroke}
-                strokeWidth={0.6}
+                fillOpacity={fillOpacityFor(p.nameJa, isCurrent)}
+                stroke={isCurrent ? '#ffffff' : COLORS.mapStroke}
+                strokeWidth={isCurrent ? 1.4 : 0.6}
                 style={
                   isCurrent
                     ? {filter: `drop-shadow(0 0 ${4 + pulse * 4}px ${COLORS.mapCurrent})`}
@@ -146,6 +178,7 @@ export const JapanMap: React.FC<JapanMapProps> = ({
               />
             );
           })}
+          {isCurrentInset ? currentRingMarker : null}
         </svg>
       </div>
     </div>

@@ -12,21 +12,33 @@ export interface MapLegendProps {
 
 /**
  * Small "少ない -> 多い" color key so the choropleth coloring on the map is
- * actually readable, not just decorative. Deliberately compact -- it's a
- * supporting legend, not a focal point.
+ * actually readable, not just decorative. Deliberately compact and tucked
+ * into a corner -- it's a supporting legend, not a focal point, and now
+ * sits as an overlay directly on the map so it carries its own translucent
+ * backing to stay legible over whatever color is behind it.
  */
 export const MapLegend: React.FC<MapLegendProps> = ({colorScale, valueFormatterId, unit}) => {
   return (
-    <div style={{display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4}}>
-      <div style={{display: 'flex', gap: 3}}>
+    <div
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'flex-start',
+        gap: 3,
+        background: 'rgba(6, 10, 20, 0.6)',
+        borderRadius: 8,
+        padding: '6px 8px',
+      }}
+    >
+      <div style={{display: 'flex', gap: 2}}>
         {colorScale.colors.map((color, i) => (
           <div
             key={color}
             style={{
-              width: 30,
-              height: 12,
+              width: 18,
+              height: 8,
               background: color,
-              borderRadius: i === 0 ? '6px 0 0 6px' : i === colorScale.colors.length - 1 ? '0 6px 6px 0' : 0,
+              borderRadius: i === 0 ? '4px 0 0 4px' : i === colorScale.colors.length - 1 ? '0 4px 4px 0' : 0,
             }}
           />
         ))}
@@ -35,8 +47,8 @@ export const MapLegend: React.FC<MapLegendProps> = ({colorScale, valueFormatterI
         style={{
           display: 'flex',
           justifyContent: 'space-between',
-          width: 30 * colorScale.colors.length + 3 * (colorScale.colors.length - 1),
-          fontSize: 15,
+          width: 18 * colorScale.colors.length + 2 * (colorScale.colors.length - 1),
+          fontSize: 11,
           color: COLORS.textSecondary,
         }}
       >

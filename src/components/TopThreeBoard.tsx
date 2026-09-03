@@ -15,12 +15,14 @@ export interface TopThreeBoardProps {
   durationInFrames: number;
 }
 
-const ROW_HEIGHT = 58;
+const SLOT_WIDTH_PERCENT = 100 / 3;
 
 /**
- * "暫定TOP3" -- the leaderboard among prefectures shown so far. Every time a
- * new prefecture enters or reshuffles the top 3, its row slides to its new
- * slot instead of just popping there, so the reorder reads as a reorder.
+ * "暫定TOP3" -- the leaderboard among prefectures shown so far. Kept
+ * deliberately low-key (a slim single-row strip, muted background, small
+ * type) so the map stays the visual lead; a viewer notices it without it
+ * competing for attention. Every time a new prefecture enters or reshuffles
+ * the top 3, its chip slides to its new slot instead of just popping there.
  */
 export const TopThreeBoard: React.FC<TopThreeBoardProps> = ({
   previousTop3,
@@ -42,16 +44,18 @@ export const TopThreeBoard: React.FC<TopThreeBoardProps> = ({
   return (
     <div
       style={{
-        background: COLORS.panelBackground,
-        border: `1px solid ${COLORS.panelBorder}`,
-        borderRadius: 20,
-        padding: '14px 20px 16px',
+        display: 'flex',
+        alignItems: 'center',
+        gap: 10,
+        background: 'rgba(10, 15, 27, 0.7)',
+        borderRadius: 12,
+        padding: '8px 14px',
       }}
     >
-      <div style={{fontSize: 22, color: COLORS.textSecondary, marginBottom: 8, fontWeight: 700}}>
+      <div style={{fontSize: 15, color: COLORS.textSecondary, fontWeight: 700, flexShrink: 0}}>
         暫定TOP3
       </div>
-      <div style={{position: 'relative', height: ROW_HEIGHT * 3}}>
+      <div style={{position: 'relative', flex: 1, height: 34}}>
         {currentTop3.map((entry, slotIndex) => {
           const previousSlotIndex = previousTop3.findIndex((p) => p.prefecture === entry.prefecture);
           const isNewEntry = previousSlotIndex === -1;
@@ -65,21 +69,38 @@ export const TopThreeBoard: React.FC<TopThreeBoardProps> = ({
               style={{
                 position: 'absolute',
                 top: 0,
-                left: 0,
-                right: 0,
-                height: ROW_HEIGHT,
-                transform: `translateY(${slot * ROW_HEIGHT}px)`,
+                left: `${slot * SLOT_WIDTH_PERCENT}%`,
+                width: `${SLOT_WIDTH_PERCENT}%`,
+                height: '100%',
                 opacity,
                 display: 'flex',
                 alignItems: 'center',
-                gap: 14,
+                gap: 6,
+                paddingRight: 6,
               }}
             >
-              <RankPill rank={slotIndex + 1} size={36} />
-              <div style={{fontSize: 26, fontWeight: 700, color: COLORS.textPrimary, flex: 1}}>
+              <RankPill rank={slotIndex + 1} size={22} />
+              <div
+                style={{
+                  fontSize: 16,
+                  fontWeight: 700,
+                  color: COLORS.textPrimary,
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
+                }}
+              >
                 {entry.prefecture}
               </div>
-              <div style={{fontSize: 24, fontWeight: 700, color: COLORS.accent, fontVariantNumeric: 'tabular-nums'}}>
+              <div
+                style={{
+                  fontSize: 14,
+                  fontWeight: 700,
+                  color: COLORS.accent,
+                  fontVariantNumeric: 'tabular-nums',
+                  whiteSpace: 'nowrap',
+                }}
+              >
                 {formatValue(theme.valueFormatterId, entry.value, theme.unit)}
               </div>
             </div>
