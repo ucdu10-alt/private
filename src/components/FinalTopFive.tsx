@@ -17,8 +17,15 @@ export interface FinalTopFiveProps {
 export const FinalTopFive: React.FC<FinalTopFiveProps> = ({theme}) => {
   const frame = useCurrentFrame();
   const top5 = theme.ranked.slice(0, 5);
+  const listTitle = theme.finalListTitle ?? '全国TOP5';
 
   const headerOpacity = interpolate(frame, [0, 10], [0, 1], {
+    extrapolateLeft: 'clamp',
+    extrapolateRight: 'clamp',
+  });
+
+  const closingLineDelay = 10 + top5.length * 6 + 6;
+  const closingLineOpacity = interpolate(frame, [closingLineDelay, closingLineDelay + 14], [0, 1], {
     extrapolateLeft: 'clamp',
     extrapolateRight: 'clamp',
   });
@@ -32,9 +39,10 @@ export const FinalTopFive: React.FC<FinalTopFiveProps> = ({theme}) => {
           color: COLORS.textSecondary,
           marginBottom: 28,
           opacity: headerOpacity,
+          textAlign: 'center',
         }}
       >
-        全国TOP5
+        {listTitle}
       </div>
       <div style={{display: 'flex', flexDirection: 'column', gap: 18, width: '100%'}}>
         {top5.map((row, i) => {
@@ -80,8 +88,22 @@ export const FinalTopFive: React.FC<FinalTopFiveProps> = ({theme}) => {
           );
         })}
       </div>
+      {theme.closingLine ? (
+        <div
+          style={{
+            marginTop: 30,
+            fontSize: 32,
+            fontWeight: 800,
+            color: COLORS.accent,
+            opacity: closingLineOpacity,
+            textAlign: 'center',
+          }}
+        >
+          {theme.closingLine}
+        </div>
+      ) : null}
       {theme.sourceText ? (
-        <div style={{marginTop: 32, fontSize: 18, color: COLORS.textSecondary, opacity: 0.8}}>
+        <div style={{marginTop: 20, fontSize: 18, color: COLORS.textSecondary, opacity: 0.8}}>
           {theme.sourceText}
         </div>
       ) : null}

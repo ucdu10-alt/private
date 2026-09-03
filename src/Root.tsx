@@ -1,10 +1,18 @@
 import React from 'react';
 import {Composition} from 'remotion';
 import {PrefectureRankingVideo, PrefectureRankingVideoProps} from './components/PrefectureRankingVideo';
-import {computeTotalDurationInFrames, FPS, VIDEO_HEIGHT, VIDEO_WIDTH} from './config/timing';
+import {FINAL_TOP_FIVE_FRAMES, FPS, HOOK_FRAMES, PER_PREFECTURE_FRAMES, VIDEO_HEIGHT, VIDEO_WIDTH} from './config/timing';
 import {loadTheme} from './data/loadTheme';
-import {PREFECTURE_ORDER_NORTH_TO_SOUTH} from './data/prefectureOrder';
+import {PREFECTURE_ORDER_NORTH_TO_SOUTH, resolveDisplayOrder} from './data/prefectureOrder';
 import {THEME_REGISTRY} from './data/themes/registry';
+import {computeItemDurations, sumDurations} from './utils/timeline';
+
+// Rough placeholder used only until calculateMetadata resolves the real
+// theme (ignores hook/reaction timing, which need the loaded CSV) --
+// Remotion requires a durationInFrames up front even though this one gets
+// immediately overridden.
+const PLACEHOLDER_DURATION =
+  PREFECTURE_ORDER_NORTH_TO_SOUTH.length * PER_PREFECTURE_FRAMES + FINAL_TOP_FIVE_FRAMES;
 
 /**
  * One Composition per registered theme, named after the theme's id (e.g.
@@ -31,21 +39,18 @@ export const RemotionRoot: React.FC = () => {
             fps={FPS}
             width={VIDEO_WIDTH}
             height={VIDEO_HEIGHT}
-            durationInFrames={computeTotalDurationInFrames(PREFECTURE_ORDER_NORTH_TO_SOUTH.length)}
+            durationInFrames={PLACEHOLDER_DURATION}
             defaultProps={defaultProps}
             calculateMetadata={async ({props}) => {
               const theme = await loadTheme(props.themeId);
+              const orderedRows = resolveDisplayOrder(theme);
 
-              // Display order is always the fixed north->south list; a
-              // theme's CSV is expected to cover all 47, but if it's ever a
-              // subset (e.g. while iterating on new data), skip missing
-              // rows instead of crashing.
-              const orderedRows = PREFECTURE_ORDER_NORTH_TO_SOUTH.map(
-                (name) => theme.rankByPrefecture[name],
-              ).filter((row): row is NonNullable<typeof row> => Boolean(row));
+              const hookFrames = theme.hookText ? HOOK_FRAMES : 0;
+              const itemDurations = computeItemDurations(orderedRows, theme, PER_PREFECTURE_FRAMES);
+              const durationInFrames = hookFrames + sumDurations(itemDurations) + FINAL_TOP_FIVE_FRAMES;
 
               return {
-                durationInFrames: computeTotalDurationInFrames(orderedRows.length),
+                durationInFrames,
                 props: {...props, theme, orderedRows},
               };
             }}

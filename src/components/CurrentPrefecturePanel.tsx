@@ -91,8 +91,8 @@ export const CurrentPrefecturePanel: React.FC<CurrentPrefecturePanelProps> = ({
         <div
           style={{
             flexShrink: 0,
-            background: COLORS.rankBadge,
-            color: '#2a0d0d',
+            background: row.rank === 1 ? COLORS.accent : COLORS.rankBadge,
+            color: row.rank === 1 ? '#2a1c02' : '#2a0d0d',
             fontWeight: 900,
             fontSize: 46,
             padding: '8px 26px',

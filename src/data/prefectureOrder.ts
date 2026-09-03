@@ -1,3 +1,5 @@
+import type {RankedPrefecture, ResolvedTheme} from './types';
+
 /**
  * Fixed north -> south display order for all 47 prefectures.
  *
@@ -69,3 +71,25 @@ export const PREFECTURE_ORDER_NORTH_TO_SOUTH: string[] = [
   // Okinawa
   '沖縄県',
 ];
+
+/**
+ * Resolves the actual on-screen order for a resolved theme: the fixed
+ * north->south geographic tour by default, or a worst-to-best rank
+ * countdown when the theme opts into `displayOrder: 'rankAscending'`.
+ *
+ * A theme's CSV is expected to cover all 47 prefectures, but if it's ever
+ * a subset (e.g. while iterating on new data), missing rows are skipped
+ * instead of crashing.
+ */
+export const resolveDisplayOrder = (
+  theme: Pick<ResolvedTheme, 'displayOrder' | 'ranked' | 'rankByPrefecture'>,
+): RankedPrefecture[] => {
+  if (theme.displayOrder === 'rankAscending') {
+    // theme.ranked is best (#1) -> worst; reverse to count up from the
+    // bottom of the ranking to #1.
+    return [...theme.ranked].reverse();
+  }
+  return PREFECTURE_ORDER_NORTH_TO_SOUTH.map((name) => theme.rankByPrefecture[name]).filter(
+    (row): row is RankedPrefecture => Boolean(row),
+  );
+};

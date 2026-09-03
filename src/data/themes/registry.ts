@@ -32,5 +32,15 @@ export const THEME_REGISTRY: Record<string, ThemeMeta> = {
     rankDirection: 'higherIsBetter',
     sourceText: '出典: e-Stat 経済センサス（2021年6月調査）',
     csvPath: 'data/sushi-shops.csv',
+    displayOrder: 'rankAscending',
+    hookText: '寿司屋が多い県、海沿いが強いと思ってない？',
+    reactions: {
+      // Yamanashi is landlocked yet #1 in this dataset -- the reaction and
+      // the "final item" emphasis below land on the same prefecture.
+      山梨県: '海なし県なのに、こんな上位！？',
+    },
+    emphasizeFinalItem: true,
+    finalListTitle: '人口10万人あたりの寿司店数 TOP5',
+    closingLine: 'あなたの県は何位だった？',
   },
 };

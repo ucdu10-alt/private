@@ -1,9 +1,11 @@
-import React from 'react';
+import React, {useMemo} from 'react';
 import {AbsoluteFill, Series} from 'remotion';
 import type {RankedPrefecture, ResolvedTheme} from '../data/types';
-import {FINAL_TOP_FIVE_FRAMES, PER_PREFECTURE_FRAMES} from '../config/timing';
+import {FINAL_TOP_FIVE_FRAMES, HOOK_FRAMES, PER_PREFECTURE_FRAMES} from '../config/timing';
 import {COLORS, FONT_FAMILY} from '../config/theme';
+import {computeItemDurations, sumDurations} from '../utils/timeline';
 import {PersistentHeader} from './PersistentHeader';
+import {HookIntro} from './HookIntro';
 import {RankingScene} from './RankingScene';
 import {FinalTopFive} from './FinalTopFive';
 
@@ -21,11 +23,21 @@ export type PrefectureRankingVideoProps = {
 };
 
 export const PrefectureRankingVideo: React.FC<PrefectureRankingVideoProps> = ({theme, orderedRows}) => {
+  // itemDurations must stay identical to what Root.tsx used to size the
+  // Composition -- both call the same pure function over the same inputs,
+  // so they can never drift apart even though they run in different places.
+  const itemDurations = useMemo(
+    () => (theme ? computeItemDurations(orderedRows, theme, PER_PREFECTURE_FRAMES) : []),
+    [theme, orderedRows],
+  );
+
   if (!theme || orderedRows.length === 0) {
     // calculateMetadata always resolves these before the composition
     // actually renders/plays; this guard only exists to satisfy the type.
     return null;
   }
+
+  const sweepFrames = sumDurations(itemDurations);
 
   return (
     <AbsoluteFill style={{backgroundColor: COLORS.background, fontFamily: FONT_FAMILY}}>
@@ -34,7 +46,13 @@ export const PrefectureRankingVideo: React.FC<PrefectureRankingVideoProps> = ({t
       <PersistentHeader title={theme.title} />
 
       <Series>
-        <Series.Sequence durationInFrames={orderedRows.length * PER_PREFECTURE_FRAMES}>
+        {theme.hookText ? (
+          <Series.Sequence durationInFrames={HOOK_FRAMES}>
+            <HookIntro text={theme.hookText} durationInFrames={HOOK_FRAMES} />
+          </Series.Sequence>
+        ) : null}
+
+        <Series.Sequence durationInFrames={sweepFrames}>
           <RankingScene theme={theme} orderedRows={orderedRows} perPrefectureFrames={PER_PREFECTURE_FRAMES} />
         </Series.Sequence>
 

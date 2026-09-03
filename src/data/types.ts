@@ -16,6 +16,13 @@ export interface RankedPrefecture extends PrefectureDataRow {
 /** Whether a bigger `value` or a smaller `value` counts as "rank 1". */
 export type RankDirection = 'higherIsBetter' | 'lowerIsBetter';
 
+/**
+ * How prefectures are ordered on screen. 'northToSouth' (the default) is
+ * the geographic sweep from data/prefectureOrder.ts; 'rankAscending' is a
+ * countdown from the worst rank up to #1, independent of geography.
+ */
+export type DisplayOrderMode = 'northToSouth' | 'rankAscending';
+
 /** Registry of formatters a theme can pick from without embedding functions in props. */
 export type ValueFormatterId = 'hoursMinutes' | 'decimal1' | 'integer' | 'percent1';
 
@@ -39,6 +46,24 @@ export interface ThemeMeta {
   sourceText?: string;
   /** Path to the CSV inside public/, passed to Remotion's staticFile() */
   csvPath: string;
+
+  /** Defaults to 'northToSouth' if omitted. */
+  displayOrder?: DisplayOrderMode;
+  /** Optional short teaser shown once, before the sweep starts (skipped entirely if omitted). */
+  hookText?: string;
+  /**
+   * Prefecture name -> a short reaction line. When that prefecture is
+   * current, the line is shown as an extra-prominent banner and the
+   * prefecture gets extra hold time. Purely data-driven -- the template
+   * never invents its own commentary.
+   */
+  reactions?: Record<string, string>;
+  /** Give the very last prefecture in the sweep extra hold time. Defaults to false. */
+  emphasizeFinalItem?: boolean;
+  /** Heading for the closing ranked list. Defaults to "全国TOP5" if omitted. */
+  finalListTitle?: string;
+  /** Optional line shown under the closing ranked list. */
+  closingLine?: string;
 }
 
 /** A theme with its CSV loaded and rankings computed, ready to render. */
