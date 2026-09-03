@@ -38,11 +38,13 @@ export const PersistentHeader: React.FC<PersistentHeaderProps> = ({fishName, tit
       <div
         style={{
           fontFamily: FONT_FAMILY_DISPLAY,
-          fontSize: 22,
-          fontWeight: 600,
+          fontSize: 42,
+          fontWeight: 700,
           color: COLORS.textSecondary,
-          marginTop: 4,
+          marginTop: 8,
           textAlign: 'center',
+          lineHeight: 1.3,
+          maxWidth: 940,
         }}
       >
         {title}

@@ -68,13 +68,13 @@ export const IntroTitleScene: React.FC<IntroTitleSceneProps> = ({
       <div
         style={{
           fontFamily: FONT_FAMILY_DISPLAY,
-          fontSize: 42,
+          fontSize: 80,
           fontWeight: 700,
           color: COLORS.textSecondary,
-          marginTop: 18,
+          marginTop: 24,
           textAlign: 'center',
-          maxWidth: 900,
-          lineHeight: 1.4,
+          maxWidth: 940,
+          lineHeight: 1.3,
           opacity: fadeIn,
           paddingLeft: SAFE_AREA.side,
           paddingRight: SAFE_AREA.side,

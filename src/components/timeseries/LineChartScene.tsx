@@ -103,7 +103,7 @@ export const LineChartScene: React.FC<LineChartSceneProps> = ({
 
   return (
     <div style={{position: 'absolute', top: 0, left: 0, right: 0, bottom: 0}}>
-      <div style={{position: 'absolute', top: 250, left: 0, right: 0, display: 'flex', justifyContent: 'center'}}>
+      <div style={{position: 'absolute', top: 290, left: 0, right: 0, display: 'flex', justifyContent: 'center'}}>
         <BigStat label={formatYear(currentRow.year)} value={formatWithUnit(currentRow.catchTons, unit)} valueFontSize={104} labelFontSize={34} color={COLORS.accentStrong} />
       </div>
 

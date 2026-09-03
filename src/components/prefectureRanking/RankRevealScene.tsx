@@ -47,7 +47,7 @@ export const RankRevealScene: React.FC<RankRevealSceneProps> = ({
       <div
         style={{
           position: 'absolute',
-          top: 190,
+          top: 260,
           left: 0,
           right: 0,
           display: 'flex',
@@ -67,7 +67,7 @@ export const RankRevealScene: React.FC<RankRevealSceneProps> = ({
         </div>
       </div>
 
-      <div style={{position: 'absolute', top: 520, left: SAFE_AREA.side, right: SAFE_AREA.side, bottom: 320, overflow: 'hidden', borderRadius: 12}}>
+      <div style={{position: 'absolute', top: 570, left: SAFE_AREA.side, right: SAFE_AREA.side, bottom: 320, overflow: 'hidden', borderRadius: 12}}>
         <JapanMap
           currentPrefectureName={prefecture}
           previousPrefectureName={previousPrefecture}
