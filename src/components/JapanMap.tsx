@@ -87,7 +87,12 @@ export const JapanMap: React.FC<JapanMapProps> = ({
 
   return (
     <div style={{position: 'relative', width: '100%', height: '100%'}}>
-      <svg viewBox={cameraRectToViewBox(cameraRect)} width="100%" height="100%" style={{overflow: 'visible'}}>
+      <svg
+        viewBox={cameraRectToViewBox(cameraRect)}
+        width="100%"
+        height="100%"
+        style={{display: 'block', overflow: 'visible'}}
+      >
         {mainPaths.map((p) => {
           const isCurrent = p.nameJa === currentPrefectureName;
           return (
@@ -123,7 +128,7 @@ export const JapanMap: React.FC<JapanMapProps> = ({
         }}
       >
         <div style={{fontSize: 11, color: COLORS.textSecondary, lineHeight: 1}}>沖縄</div>
-        <svg viewBox={OKINAWA_INSET_VIEWBOX} width="100%" height="100%">
+        <svg viewBox={OKINAWA_INSET_VIEWBOX} width="100%" height="100%" style={{display: 'block'}}>
           {insetPaths.map((p) => {
             const isCurrent = p.nameJa === currentPrefectureName;
             return (

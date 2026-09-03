@@ -48,7 +48,7 @@ export const RankingScene: React.FC<RankingSceneProps> = ({theme, orderedRows, p
   );
 
   return (
-    <AbsoluteFill style={{display: 'flex', flexDirection: 'column', padding: '108px 36px 28px'}}>
+    <AbsoluteFill style={{display: 'flex', flexDirection: 'column', padding: '230px 36px 28px'}}>
       <div style={{position: 'relative', flex: 1, minHeight: 0}}>
         <JapanMap
           currentPrefectureName={currentRow.prefecture}

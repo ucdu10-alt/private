@@ -33,20 +33,22 @@ export const PersistentHeader: React.FC<PersistentHeaderProps> = ({title}) => {
         top: 0,
         left: 0,
         right: 0,
+        zIndex: 10,
         display: 'flex',
         justifyContent: 'center',
-        padding: '30px 56px 14px',
+        padding: '26px 48px 16px',
         opacity,
         transform: `translateY(${translateY}px)`,
       }}
     >
       <div
         style={{
-          fontSize: 34,
+          fontSize: 68,
           fontWeight: 800,
           color: COLORS.textPrimary,
           textAlign: 'center',
           lineHeight: 1.3,
+          textShadow: '0 3px 10px rgba(0, 0, 0, 0.55), 0 1px 3px rgba(0, 0, 0, 0.8)',
         }}
       >
         {title}
