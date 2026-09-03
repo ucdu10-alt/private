@@ -1,0 +1,24 @@
+{
+  "name": "prefecture-ranking-video",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Remotion template that turns a prefecture -> value CSV/JSON dataset into a 9:16 north-to-south ranking video for Reels/TikTok/Shorts.",
+  "scripts": {
+    "start": "remotion studio",
+    "build": "remotion render PrefectureRanking out/video.mp4",
+    "still": "remotion still",
+    "upgrade": "remotion upgrade",
+    "typecheck": "tsc -noEmit"
+  },
+  "dependencies": {
+    "@remotion/cli": "4.0.520",
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
+    "remotion": "4.0.520"
+  },
+  "devDependencies": {
+    "@types/react": "18.3.1",
+    "@types/react-dom": "18.3.1",
+    "typescript": "5.6.3"
+  }
+}
