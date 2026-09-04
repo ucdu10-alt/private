@@ -1,9 +1,12 @@
 import React from 'react';
 import {Composition} from 'remotion';
 import {PrefectureRankingVideo, PrefectureRankingVideoProps} from './components/PrefectureRankingVideo';
+import {DualMetricRankingVideo, DualMetricRankingVideoProps} from './components/DualMetricRankingVideo';
 import {
+  DUAL_METRIC_TOP3_SCREEN_FRAMES,
   FINAL_TOP_FIVE_FRAMES,
   FPS,
+  FRAMES_PER_PREFECTURE_DUAL_METRIC,
   HOOK_FRAMES,
   PER_PREFECTURE_FRAMES,
   resolveFinalTopFiveFrames,
@@ -13,14 +16,18 @@ import {
 import {loadTheme} from './data/loadTheme';
 import {PREFECTURE_ORDER_NORTH_TO_SOUTH, resolveDisplayOrder} from './data/prefectureOrder';
 import {THEME_REGISTRY} from './data/themes/registry';
+import {loadDualMetricTheme} from './data/dualMetric/loadDualMetricTheme';
+import {DUAL_METRIC_THEME_REGISTRY} from './data/dualMetric/registry';
 import {computeItemDurations, sumDurations} from './utils/timeline';
 
-// Rough placeholder used only until calculateMetadata resolves the real
+// Rough placeholders used only until calculateMetadata resolves the real
 // theme (ignores hook/reaction timing, which need the loaded CSV) --
-// Remotion requires a durationInFrames up front even though this one gets
+// Remotion requires a durationInFrames up front even though these get
 // immediately overridden.
 const PLACEHOLDER_DURATION =
   PREFECTURE_ORDER_NORTH_TO_SOUTH.length * PER_PREFECTURE_FRAMES + FINAL_TOP_FIVE_FRAMES;
+const DUAL_METRIC_PLACEHOLDER_DURATION =
+  PREFECTURE_ORDER_NORTH_TO_SOUTH.length * FRAMES_PER_PREFECTURE_DUAL_METRIC + DUAL_METRIC_TOP3_SCREEN_FRAMES * 2;
 
 /**
  * One Composition per registered theme, named after the theme's id (e.g.
@@ -61,6 +68,37 @@ export const RemotionRoot: React.FC = () => {
               return {
                 durationInFrames,
                 props: {...props, theme, orderedRows},
+              };
+            }}
+          />
+        );
+      })}
+
+      {Object.keys(DUAL_METRIC_THEME_REGISTRY).map((themeId) => {
+        const defaultProps: DualMetricRankingVideoProps = {
+          themeId,
+          theme: null,
+          rows: [],
+        };
+
+        return (
+          <Composition<any, DualMetricRankingVideoProps>
+            key={themeId}
+            id={themeId}
+            component={DualMetricRankingVideo}
+            fps={FPS}
+            width={VIDEO_WIDTH}
+            height={VIDEO_HEIGHT}
+            durationInFrames={DUAL_METRIC_PLACEHOLDER_DURATION}
+            defaultProps={defaultProps}
+            calculateMetadata={async ({props}) => {
+              const theme = await loadDualMetricTheme(props.themeId);
+              const sweepFrames = theme.rows.length * FRAMES_PER_PREFECTURE_DUAL_METRIC;
+              const durationInFrames = sweepFrames + DUAL_METRIC_TOP3_SCREEN_FRAMES * 2;
+
+              return {
+                durationInFrames,
+                props: {...props, theme, rows: theme.rows},
               };
             }}
           />

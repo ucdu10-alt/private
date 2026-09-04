@@ -5,6 +5,17 @@ import {HEADER_INTRO_FRAMES} from '../config/timing';
 
 export interface PersistentHeaderProps {
   title: string;
+  /** Optional second line under the title, always shown alongside it (unlike ThemeMeta.subtitle elsewhere, which isn't rendered). */
+  subtitle?: string;
+  /**
+   * Smaller type + tighter padding, for videos where the header must stay
+   * out of the way of information that needs to read instantly (no title
+   * card, content starts at frame 0). Defaults to false (the original,
+   * large single-line title treatment).
+   */
+  compact?: boolean;
+  /** Frames for the entrance fade/slide. Defaults to HEADER_INTRO_FRAMES; pass 0 for an instant, no-animation appearance. */
+  introFrames?: number;
 }
 
 /**
@@ -14,17 +25,28 @@ export interface PersistentHeaderProps {
  * tunes in mid-sweep still knows what they're watching without waiting for
  * a rerun of an intro screen.
  */
-export const PersistentHeader: React.FC<PersistentHeaderProps> = ({title}) => {
+export const PersistentHeader: React.FC<PersistentHeaderProps> = ({
+  title,
+  subtitle,
+  compact = false,
+  introFrames = HEADER_INTRO_FRAMES,
+}) => {
   const frame = useCurrentFrame();
 
-  const opacity = interpolate(frame, [0, HEADER_INTRO_FRAMES], [0, 1], {
-    extrapolateLeft: 'clamp',
-    extrapolateRight: 'clamp',
-  });
-  const translateY = interpolate(frame, [0, HEADER_INTRO_FRAMES], [-14, 0], {
-    extrapolateLeft: 'clamp',
-    extrapolateRight: 'clamp',
-  });
+  const opacity =
+    introFrames <= 0
+      ? 1
+      : interpolate(frame, [0, introFrames], [0, 1], {
+          extrapolateLeft: 'clamp',
+          extrapolateRight: 'clamp',
+        });
+  const translateY =
+    introFrames <= 0
+      ? 0
+      : interpolate(frame, [0, introFrames], [-14, 0], {
+          extrapolateLeft: 'clamp',
+          extrapolateRight: 'clamp',
+        });
 
   return (
     <div
@@ -35,15 +57,16 @@ export const PersistentHeader: React.FC<PersistentHeaderProps> = ({title}) => {
         right: 0,
         zIndex: 10,
         display: 'flex',
-        justifyContent: 'center',
-        padding: '26px 48px 16px',
+        flexDirection: 'column',
+        alignItems: 'center',
+        padding: compact ? '14px 48px 8px' : '26px 48px 16px',
         opacity,
         transform: `translateY(${translateY}px)`,
       }}
     >
       <div
         style={{
-          fontSize: 68,
+          fontSize: compact ? 30 : 68,
           fontWeight: 800,
           color: COLORS.textPrimary,
           textAlign: 'center',
@@ -53,6 +76,19 @@ export const PersistentHeader: React.FC<PersistentHeaderProps> = ({title}) => {
       >
         {title}
       </div>
+      {subtitle ? (
+        <div
+          style={{
+            fontSize: compact ? 18 : 32,
+            fontWeight: 700,
+            color: compact ? COLORS.textSecondary : COLORS.accent,
+            textAlign: 'center',
+            marginTop: compact ? 2 : 10,
+          }}
+        >
+          {subtitle}
+        </div>
+      ) : null}
     </div>
   );
 };

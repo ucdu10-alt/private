@@ -17,6 +17,10 @@ export const COLORS = {
   panelBackground: 'rgba(17, 28, 48, 0.88)',
   panelBorder: 'rgba(255, 255, 255, 0.08)',
   rankBadge: '#ff6b6b',
+  /** Dual-metric themes: raw-count metric (e.g. "店舗数") accent -- light blue/cyan. */
+  storeCountAccent: '#5fd4e8',
+  /** Dual-metric themes: per-capita metric (e.g. "人口10万人あたり") accent -- pink/orange. */
+  perCapitaAccent: '#ff8fa3',
 };
 
 export const FONT_FAMILY =

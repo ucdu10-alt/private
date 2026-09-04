@@ -38,3 +38,16 @@ export const FINAL_TOP_FIVE_FRAMES = secondsToFrames(TIMING_SECONDS.finalTopFive
 /** A theme's own `finalScreenSeconds` overrides the default final-screen length when set. */
 export const resolveFinalTopFiveFrames = (finalScreenSeconds?: number): number =>
   finalScreenSeconds ? secondsToFrames(finalScreenSeconds) : FINAL_TOP_FIVE_FRAMES;
+
+/**
+ * Dual-metric videos (src/components/DualMetricRankingVideo.tsx) always
+ * sweep in fixed geographic order at one flat pace -- no per-rank pacing
+ * curve, since order isn't rank-based there. Change this single constant to
+ * retime that whole family of videos.
+ */
+export const SECONDS_PER_PREFECTURE = 1.0;
+export const FRAMES_PER_PREFECTURE_DUAL_METRIC = secondsToFrames(SECONDS_PER_PREFECTURE);
+
+/** How long each of the two closing "TOP3" screens (primary/secondary metric) stays up. */
+export const DUAL_METRIC_TOP3_SCREEN_SECONDS = 1.8;
+export const DUAL_METRIC_TOP3_SCREEN_FRAMES = secondsToFrames(DUAL_METRIC_TOP3_SCREEN_SECONDS);

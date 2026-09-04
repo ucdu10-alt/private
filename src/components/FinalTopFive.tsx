@@ -3,7 +3,7 @@ import {AbsoluteFill, interpolate, useCurrentFrame} from 'remotion';
 import type {ResolvedTheme} from '../data/types';
 import {formatValue} from '../utils/formatters';
 import {COLORS} from '../config/theme';
-import {RankPill} from './RankPill';
+import {RankedListPanel, rankedListClosingLineDelay} from './RankedListPanel';
 
 export interface FinalTopFiveProps {
   theme: ResolvedTheme;
@@ -19,12 +19,7 @@ export const FinalTopFive: React.FC<FinalTopFiveProps> = ({theme}) => {
   const top5 = theme.ranked.slice(0, 5);
   const listTitle = theme.finalListTitle ?? '全国TOP5';
 
-  const headerOpacity = interpolate(frame, [0, 10], [0, 1], {
-    extrapolateLeft: 'clamp',
-    extrapolateRight: 'clamp',
-  });
-
-  const closingLineDelay = 10 + top5.length * 6 + 6;
+  const closingLineDelay = rankedListClosingLineDelay(top5.length);
   const closingLineOpacity = interpolate(frame, [closingLineDelay, closingLineDelay + 14], [0, 1], {
     extrapolateLeft: 'clamp',
     extrapolateRight: 'clamp',
@@ -32,62 +27,14 @@ export const FinalTopFive: React.FC<FinalTopFiveProps> = ({theme}) => {
 
   return (
     <AbsoluteFill style={{alignItems: 'center', justifyContent: 'center', padding: '0 56px'}}>
-      <div
-        style={{
-          fontSize: 44,
-          fontWeight: 800,
-          color: COLORS.textSecondary,
-          marginBottom: 28,
-          opacity: headerOpacity,
-          textAlign: 'center',
-        }}
-      >
-        {listTitle}
-      </div>
-      <div style={{display: 'flex', flexDirection: 'column', gap: 18, width: '100%'}}>
-        {top5.map((row, i) => {
-          const delay = 10 + i * 6;
-          const opacity = interpolate(frame, [delay, delay + 12], [0, 1], {
-            extrapolateLeft: 'clamp',
-            extrapolateRight: 'clamp',
-          });
-          const translateY = interpolate(frame, [delay, delay + 12], [24, 0], {
-            extrapolateLeft: 'clamp',
-            extrapolateRight: 'clamp',
-          });
-          return (
-            <div
-              key={row.prefecture}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 18,
-                background: COLORS.panelBackground,
-                border: `1px solid ${COLORS.panelBorder}`,
-                borderRadius: 18,
-                padding: '14px 22px',
-                opacity,
-                transform: `translateY(${translateY}px)`,
-              }}
-            >
-              <RankPill rank={row.rank} size={48} />
-              <div style={{fontSize: 34, fontWeight: 800, color: COLORS.textPrimary, flex: 1}}>
-                {row.prefecture}
-              </div>
-              <div
-                style={{
-                  fontSize: 30,
-                  fontWeight: 800,
-                  color: COLORS.accent,
-                  fontVariantNumeric: 'tabular-nums',
-                }}
-              >
-                {formatValue(theme.valueFormatterId, row.value, theme.unit)}
-              </div>
-            </div>
-          );
-        })}
-      </div>
+      <RankedListPanel
+        title={listTitle}
+        rows={top5.map((row) => ({
+          prefecture: row.prefecture,
+          rank: row.rank,
+          formattedValue: formatValue(theme.valueFormatterId, row.value, theme.unit),
+        }))}
+      />
       {theme.closingLine ? (
         <div
           style={{

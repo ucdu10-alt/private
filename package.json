@@ -7,6 +7,7 @@
     "start": "remotion studio",
     "build": "remotion render sleep-time out/sleep-time.mp4",
     "build:sushi-shops": "remotion render sushi-shops out/sushi-shops.mp4",
+    "build:sushi-shops-by-prefecture": "remotion render sushi-shops-by-prefecture out/sushi-shops-by-prefecture.mp4",
     "still": "remotion still",
     "upgrade": "remotion upgrade",
     "typecheck": "tsc -noEmit"

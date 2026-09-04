@@ -25,13 +25,28 @@ Remotion + React + TypeScript で作る、Instagram Reels / TikTok 向け 9:16 �
   - `emphasizeFinalItem` / 通常の表示時間延長: `pacingByRank` を指定しない場合のみ有効な簡易版（最後の1件やリアクション対象県の表示時間を一律で数倍にする）
   - `finalListTitle` / `closingLine` / `finalScreenSeconds`: 終盤のランキング一覧の見出し・締めの一言・表示時間
 
+## 2つ目のテンプレート：デュアル指標（実数＋人口あたり）動画
+
+上記は「1つの数値を北→南、またはランキング順に見せる」テンプレートですが、`sushi-shops-by-prefecture` Compositionはこれとは別の第2のテンプレート系統です。**都道府県ごとに独立して算出した2つの順位（例: 実店舗数の順位／人口10万人あたりの順位）を、北→南の地理順で同時に見せる**動画で、ランキング演出（フック・リアクション・速度カーブ）は使いません。
+
+- 表示順は常に地理順（`display_order` 列がCSVにあればそれを使用。無ければ `prefectureOrder.ts` にフォールバック）で、ランキング順とは完全に独立
+- 各都道府県で「店舗数」ブロック（水色系）と「人口10万人あたり」ブロック（ピンク系）を色分けして同時表示、順位バッジもそれぞれ別々
+- 地図は主役として最大化。値による色分け（choropleth）はせず、「未登場＝ニュートラル」「登場済み＝薄い単色」「現在＝強調」の3状態のみ
+- 実際の店舗位置データが無いため、地図上に店舗ピンは一切表示しない（架空の位置を作らない）
+- 冒頭のイントロ画面なし。フレーム0から即座に本編（北海道の数値）を表示し、常時表示の小さなヘッダーのみ
+- 本編終了後に「店舗数 TOP3」→「人口10万人あたり TOP3」を順番に表示（各ブロックが自身の色でそのまま反映）
+- 1県あたりの表示時間は `src/config/timing.ts` の `SECONDS_PER_PREFECTURE`（既定1.0秒）1つで全県一律
+
+新しいデュアル指標テーマを追加する場合は `src/data/dualMetric/registry.ts` にエントリを足すだけで、`Root.tsx` は自動的に同名のCompositionを生成します（`src/data/dualMetric/loadDualMetricTheme.ts` がCSVを読み込み、両方の指標の順位を独立に計算し、CSVに `store_rank`/`per_100k_rank` のような参照用の順位列があっても検証目的のみで使い、表示用の順位は必ずプログラム側で再計算した値を使用します）。
+
 ## プロジェクト構造
 
 ```
 public/
   data/
-    sleep-time.csv          # サンプルテーマのデータ（架空の数値、prefecture,value）
-    sushi-shops.csv         # 実データテーマ（人口10万人あたり寿司店数、e-Stat 2021年6月調査）
+    sleep-time.csv                 # サンプルテーマのデータ（架空の数値、prefecture,value）
+    sushi-shops.csv                # 実データテーマ（人口10万人あたり寿司店数、e-Stat 2021年6月調査）
+    sushi-shops-by-prefecture.csv  # デュアル指標テーマ用（display_order,prefecture,store_count,store_rank,stores_per_100k,per_100k_rank）
 
 scripts/
   build-map-paths.py        # 地図GeoJSON -> SVGパス変換スクリプト（再生成用）
@@ -46,11 +61,14 @@ src/
     theme.ts                 # 色・フォントなどのデザイントークン
 
   data/
-    types.ts                # ThemeMeta / ResolvedTheme などの型定義
+    types.ts                # ThemeMeta / ResolvedTheme と DualMetricThemeMeta / ResolvedDualMetricTheme の型定義
     prefectureOrder.ts       # 北→南の固定表示順（47件）
-    loadTheme.ts             # CSVを読み込んで順位・配色スケールを計算するローダー
+    loadTheme.ts             # CSVを読み込んで順位・配色スケールを計算するローダー（単一指標テーマ用）
     themes/
-      registry.ts            # テーマ一覧（タイトル・単位・フォーマット等）
+      registry.ts            # 単一指標テーマ一覧（タイトル・単位・フォーマット等）
+    dualMetric/
+      registry.ts             # デュアル指標テーマ一覧
+      loadDualMetricTheme.ts  # CSVを読み込んで2指標分の順位を独立に計算・検証するローダー
     geo/
       japanPaths.ts          # 都道府県ごとのSVGパス＋バウンディングボックス（自動生成、手編集禁止）
 
@@ -63,18 +81,28 @@ src/
     timeline.ts               # 1件あたりの尺の計算（pacingByRank による順位帯別ペース配分、または簡易延長ロジック）
 
   components/
+    # --- 単一指標テンプレート ---
     PrefectureRankingVideo.tsx # 全体の時間割（フック→本編→TOP5、常時ヘッダー表示）
-    PersistentHeader.tsx        # 常に画面上部に表示されるタイトル
     HookIntro.tsx                # 本編開始前の短いテロップ（theme.hookText、省略可）
     RankingScene.tsx              # 本編：フレーム→現在の都道府県を算出する中枢、地図中心のレイアウト
-    JapanMap.tsx                   # 都道府県ごとに色分け・カメラがパン&ズームする日本地図
-    MapLegend.tsx                   # 地図の色分け凡例（地図左上に重ねる小さなオーバーレイ）
-    ProgressRail.tsx                 # 地図右端の進行状況バー（北→南、またはランキング順なら順位）
-    ReactionBanner.tsx                 # 特定県だけのリアクションバナー。画面中央よりやや上の固定位置、県情報より少し遅れて表示（theme.reactions、省略可）
-    CurrentPrefecturePanel.tsx          # 県名・数値・全国順位（地図下端に重ねるキャプション）
-    TopThreeBoard.tsx                    # 暫定TOP3（画面最下部の細い帯、順位入れ替えアニメーション付き）
-    FinalTopFive.tsx                      # 終盤のランキング一覧＋締めの一言
-    RankPill.tsx                           # 順位の丸バッジ（共通パーツ）
+    ReactionBanner.tsx             # 特定県だけのリアクションバナー。画面中央よりやや上の固定位置、県情報より少し遅れて表示（theme.reactions、省略可）
+    CurrentPrefecturePanel.tsx      # 県名・数値・全国順位（地図下端に重ねるキャプション）
+    TopThreeBoard.tsx                # 暫定TOP3（画面最下部の細い帯、順位入れ替えアニメーション付き）
+    FinalTopFive.tsx                  # 終盤のランキング一覧＋締めの一言
+    MapLegend.tsx                      # 地図の色分け凡例（choropleth、地図左上のオーバーレイ）
+
+    # --- デュアル指標テンプレート ---
+    DualMetricRankingVideo.tsx  # 全体の時間割（本編→TOP3×2）。イントロなし、フレーム0から本編開始
+    DualMetricRankingScene.tsx   # 本編：地図＋2指標パネル。choropleth無し、暫定TOP3なし
+    DualMetricInfoPanel.tsx       # 県名＋「店舗数」「人口10万人あたり」の2ブロック（色で区別、順位も別々）
+    DualMetricTopThreeScreen.tsx   # 終盤の「指標名 TOP3」画面（店舗数用／人口あたり用を2回使う）
+
+    # --- 共通パーツ ---
+    PersistentHeader.tsx     # 常に画面上部に表示されるタイトル（オプションでサブタイトル・小型表示・瞬間表示に対応）
+    JapanMap.tsx               # 都道府県ごとに色分け・カメラがパン&ズームする日本地図（両テンプレート共用）
+    ProgressRail.tsx             # 地図右端の進行状況バー（北→南、またはランキング順なら順位）
+    RankedListPanel.tsx            # ランキング一覧の見た目（見出し＋順位付きリスト）。FinalTopFiveとDualMetricTopThreeScreenが共用
+    RankPill.tsx                     # 順位の丸バッジ（共通パーツ）
 ```
 
 ## 動かし方
@@ -84,13 +112,14 @@ npm install
 npm start          # Remotion Studio が起動（ブラウザでプレビュー・スクラブ再生）
 ```
 
-Studio左のCompositions一覧に、テーマごとに `sleep-time` / `sushi-shops` のようにテーマIDそのものの名前で並びます（`src/data/themes/registry.ts` にエントリを足すだけで一覧に増えます）。
+Studio左のCompositions一覧に、テーマごとに `sleep-time` / `sushi-shops` / `sushi-shops-by-prefecture` のようにテーマIDそのものの名前で並びます（単一指標テーマは `src/data/themes/registry.ts`、デュアル指標テーマは `src/data/dualMetric/registry.ts` にエントリを足すだけで一覧に増えます）。
 
 書き出す場合はComposition名を指定してレンダリングします:
 
 ```bash
 npx remotion render sleep-time out/sleep-time.mp4
 npx remotion render sushi-shops out/sushi-shops.mp4
+npx remotion render sushi-shops-by-prefecture out/sushi-shops-by-prefecture.mp4
 ```
 
 `npm run build`（sleep-time）/ `npm run build:sushi-shops` でも同じことができます。

@@ -103,3 +103,60 @@ export interface ResolvedTheme extends ThemeMeta {
   /** Choropleth color scale (low -> high) derived from this theme's own data. */
   colorScale: ColorScale;
 }
+
+// ---------------------------------------------------------------------------
+// Dual-metric themes: a second, independent template variant for showing TWO
+// separately-ranked numbers per prefecture (e.g. a raw count and a per-capita
+// rate) side by side, in the fixed north->south geographic order rather than
+// ranking order. Deliberately a separate type family from ThemeMeta/
+// ResolvedTheme above (whose whole shape assumes exactly one value/rank per
+// prefecture) instead of overloading it -- keeps sleep-time/sushi-shops
+// untouched and avoids a "sometimes-two-metrics" field soup on ThemeMeta.
+// ---------------------------------------------------------------------------
+
+/** Static, per-metric configuration -- wording, formatting, ranking, and accent color. */
+export interface MetricConfig {
+  /** Column name in the CSV holding this metric's raw numeric value. */
+  csvColumn: string;
+  /** Short label shown above the value, e.g. "店舗数". */
+  label: string;
+  unit: string;
+  valueFormatterId: ValueFormatterId;
+  rankDirection: RankDirection;
+  /** Accent color for this metric's block (see config/theme.ts). */
+  accentColor: string;
+}
+
+export interface DualMetricThemeMeta {
+  id: string;
+  /** Small, always-on-screen title, e.g. "都道府県別 寿司店数". */
+  title: string;
+  /** Small, always-on-screen line under the title, e.g. "店舗数 / 人口10万人あたり". */
+  subtitle: string;
+  primaryMetric: MetricConfig;
+  secondaryMetric: MetricConfig;
+  /** Path to the CSV inside public/, passed to Remotion's staticFile(). */
+  csvPath: string;
+  /** Column holding each row's 1-based display position. Falls back to data/prefectureOrder.ts if the column is missing/unparseable for a row. */
+  displayOrderColumn: string;
+  sourceText?: string;
+}
+
+/** One resolved row: both metrics' values and independently-computed ranks. */
+export interface DualMetricRow {
+  prefecture: string;
+  displayOrder: number;
+  primaryValue: number;
+  primaryRank: number;
+  secondaryValue: number;
+  secondaryRank: number;
+}
+
+export interface ResolvedDualMetricTheme extends DualMetricThemeMeta {
+  /** All 47 rows, sorted by displayOrder ascending. */
+  rows: DualMetricRow[];
+  /** Top 3 by primaryMetric. */
+  primaryTop3: DualMetricRow[];
+  /** Top 3 by secondaryMetric. */
+  secondaryTop3: DualMetricRow[];
+}
