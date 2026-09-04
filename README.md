@@ -25,6 +25,17 @@ Remotion + React + TypeScript で作る、Instagram Reels / TikTok 向け 9:16 �
   - `emphasizeFinalItem` / 通常の表示時間延長: `pacingByRank` を指定しない場合のみ有効な簡易版（最後の1件やリアクション対象県の表示時間を一律で数倍にする）
   - `finalListTitle` / `closingLine` / `finalScreenSeconds`: 終盤のランキング一覧の見出し・締めの一言・表示時間
 
+## レイアウト違い：視認性優先レイアウト（`layoutStyle: 'bigNumber'`）
+
+`chain-store-count` テーマは上記と同じ単一指標テンプレート（`PrefectureRankingVideo.tsx`、フック・リアクション・`pacingByRank` などの仕組みは共通）ですが、本編の見た目だけ差し替える `layoutStyle: 'bigNumber'` を指定しています。地図に数値・順位を重ねる代わりに、**順位→県名→数値を画面占有率の大きい、重なり合わない3つのブロックに完全分離**したレイアウトです（`BigRankingScene.tsx`）。
+
+- 最上部（ヘッダー直下・常に同じ位置）: 大きな「全国◯位」バッジ（`BigRankBadge.tsx`）。県が変わっても位置は動かず、太字・影付き
+- 中央: 地図（`JapanMap.tsx` をそのまま再利用、choroplethなし・パン&ズームのみ）。ここは"補助"で、主役は上下のテキストブロック
+- 下部: 県名（大きめ）＋半透明の背景パネルに載せた巨大な数値（`BigNumberInfoPanel.tsx`）。パネル上部のラベルは `theme.valueLabel`（省略時は `theme.unit`）を表示
+- ヘッダーも `compact` 表示（小さめ・省スペース）にして本編の情報を邪魔しない
+
+`theme.layoutStyle` を省略、または `'default'` にすると従来の地図オーバーレイ型レイアウト（`RankingScene.tsx`）のままです。既存の `sleep-time` / `sushi-shops` / `sushi-shops-by-prefecture` はこのフィールド自体を持たないため、挙動は変わりません。
+
 ## 2つ目のテンプレート：デュアル指標（実数＋人口あたり）動画
 
 上記は「1つの数値を北→南、またはランキング順に見せる」テンプレートですが、`sushi-shops-by-prefecture` Compositionはこれとは別の第2のテンプレート系統です。**都道府県ごとに独立して算出した2つの順位（例: 実店舗数の順位／人口10万人あたりの順位）を、北→南の地理順で同時に見せる**動画で、ランキング演出（フック・リアクション・速度カーブ）は使いません。
@@ -47,6 +58,7 @@ public/
     sleep-time.csv                 # サンプルテーマのデータ（架空の数値、prefecture,value）
     sushi-shops.csv                # 実データテーマ（人口10万人あたり寿司店数、e-Stat 2021年6月調査）
     sushi-shops-by-prefecture.csv  # デュアル指標テーマ用（display_order,prefecture,store_count,store_rank,stores_per_100k,per_100k_rank）
+    chain-store-count.csv          # 視認性優先レイアウト用（実店舗数、sushi-shops-by-prefecture.csvと同じ実データ由来、prefecture,value）
 
 scripts/
   build-map-paths.py        # 地図GeoJSON -> SVGパス変換スクリプト（再生成用）
@@ -84,12 +96,15 @@ src/
     # --- 単一指標テンプレート ---
     PrefectureRankingVideo.tsx # 全体の時間割（フック→本編→TOP5、常時ヘッダー表示）
     HookIntro.tsx                # 本編開始前の短いテロップ（theme.hookText、省略可）
-    RankingScene.tsx              # 本編：フレーム→現在の都道府県を算出する中枢、地図中心のレイアウト
+    RankingScene.tsx              # 本編（layoutStyle: 'default'）：フレーム→現在の都道府県を算出する中枢、地図中心のレイアウト
     ReactionBanner.tsx             # 特定県だけのリアクションバナー。画面中央よりやや上の固定位置、県情報より少し遅れて表示（theme.reactions、省略可）
     CurrentPrefecturePanel.tsx      # 県名・数値・全国順位（地図下端に重ねるキャプション）
     TopThreeBoard.tsx                # 暫定TOP3（画面最下部の細い帯、順位入れ替えアニメーション付き）
     FinalTopFive.tsx                  # 終盤のランキング一覧＋締めの一言
     MapLegend.tsx                      # 地図の色分け凡例（choropleth、地図左上のオーバーレイ）
+    BigRankingScene.tsx            # 本編（layoutStyle: 'bigNumber'）：順位・県名・数値を重ならない3ブロックに分離した視認性優先レイアウト
+    BigRankBadge.tsx                 # 「全国◯位」の大型固定バッジ（BigRankingScene専用）
+    BigNumberInfoPanel.tsx            # 県名＋巨大な数値（半透明パネル、theme.valueLabelでラベル指定）（BigRankingScene専用）
 
     # --- デュアル指標テンプレート ---
     DualMetricRankingVideo.tsx  # 全体の時間割（本編→TOP3×2）。イントロなし、フレーム0から本編開始
@@ -112,17 +127,18 @@ npm install
 npm start          # Remotion Studio が起動（ブラウザでプレビュー・スクラブ再生）
 ```
 
-Studio左のCompositions一覧に、テーマごとに `sleep-time` / `sushi-shops` / `sushi-shops-by-prefecture` のようにテーマIDそのものの名前で並びます（単一指標テーマは `src/data/themes/registry.ts`、デュアル指標テーマは `src/data/dualMetric/registry.ts` にエントリを足すだけで一覧に増えます）。
+Studio左のCompositions一覧に、テーマごとに `sleep-time` / `sushi-shops` / `chain-store-count` / `sushi-shops-by-prefecture` のようにテーマIDそのものの名前で並びます（単一指標テーマは `src/data/themes/registry.ts`、デュアル指標テーマは `src/data/dualMetric/registry.ts` にエントリを足すだけで一覧に増えます）。
 
 書き出す場合はComposition名を指定してレンダリングします:
 
 ```bash
 npx remotion render sleep-time out/sleep-time.mp4
 npx remotion render sushi-shops out/sushi-shops.mp4
+npx remotion render chain-store-count out/chain-store-count.mp4
 npx remotion render sushi-shops-by-prefecture out/sushi-shops-by-prefecture.mp4
 ```
 
-`npm run build`（sleep-time）/ `npm run build:sushi-shops` でも同じことができます。
+`npm run build`（sleep-time）/ `npm run build:sushi-shops` / `npm run build:chain-store-count` / `npm run build:sushi-shops-by-prefecture` でも同じことができます。
 
 ### このサンドボックス環境について
 

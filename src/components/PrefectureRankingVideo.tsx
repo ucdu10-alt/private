@@ -7,6 +7,7 @@ import {computeItemDurations, sumDurations} from '../utils/timeline';
 import {PersistentHeader} from './PersistentHeader';
 import {HookIntro} from './HookIntro';
 import {RankingScene} from './RankingScene';
+import {BigRankingScene} from './BigRankingScene';
 import {FinalTopFive} from './FinalTopFive';
 
 /**
@@ -38,12 +39,19 @@ export const PrefectureRankingVideo: React.FC<PrefectureRankingVideoProps> = ({t
   }
 
   const sweepFrames = sumDurations(itemDurations);
+  const isBigNumberLayout = theme.layoutStyle === 'bigNumber';
+  const Scene = isBigNumberLayout ? BigRankingScene : RankingScene;
 
   return (
     <AbsoluteFill style={{backgroundColor: COLORS.background, fontFamily: FONT_FAMILY}}>
       {/* Rendered outside the Series so it stays mounted (and thus visibly
           on screen) for the whole video instead of only during one phase. */}
-      <PersistentHeader title={theme.title} />
+      <PersistentHeader
+        title={theme.title}
+        subtitle={isBigNumberLayout ? theme.subtitle : undefined}
+        compact={isBigNumberLayout}
+        introFrames={isBigNumberLayout ? 0 : undefined}
+      />
 
       <Series>
         {theme.hookText ? (
@@ -53,7 +61,7 @@ export const PrefectureRankingVideo: React.FC<PrefectureRankingVideoProps> = ({t
         ) : null}
 
         <Series.Sequence durationInFrames={sweepFrames}>
-          <RankingScene theme={theme} orderedRows={orderedRows} perPrefectureFrames={PER_PREFECTURE_FRAMES} />
+          <Scene theme={theme} orderedRows={orderedRows} perPrefectureFrames={PER_PREFECTURE_FRAMES} />
         </Series.Sequence>
 
         <Series.Sequence durationInFrames={resolveFinalTopFiveFrames(theme.finalScreenSeconds)}>

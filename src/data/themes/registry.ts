@@ -51,4 +51,28 @@ export const THEME_REGISTRY: Record<string, ThemeMeta> = {
     closingLine: 'あなたの県は何位だった？',
     finalScreenSeconds: 5,
   },
+  'chain-store-count': {
+    id: 'chain-store-count',
+    title: '寿司店の店舗数が多い県はどこ？',
+    subtitle: '店舗数ランキング',
+    unit: '店舗',
+    valueLabel: '店舗数',
+    valueFormatterId: 'integer',
+    rankDirection: 'higherIsBetter',
+    sourceText: '出典: e-Stat 経済センサス（2021年6月調査、実店舗数）',
+    csvPath: 'data/chain-store-count.csv',
+    displayOrder: 'rankAscending',
+    layoutStyle: 'bigNumber',
+    // Readability-first pacing: quick through the long mid-pack, slower for
+    // the top 10, slower still for the top 3 climax. No reactions here --
+    // the whole point of this layout is the number speaking for itself.
+    pacingByRank: [
+      {fromRank: 47, toRank: 11, fromSeconds: 1.2, toSeconds: 1.6},
+      {fromRank: 10, toRank: 4, fromSeconds: 1.8, toSeconds: 2.2},
+      {fromRank: 3, toRank: 1, fromSeconds: 2.6, toSeconds: 3.0},
+    ],
+    finalListTitle: '店舗数 TOP5',
+    closingLine: 'あなたの県は何位だった？',
+    finalScreenSeconds: 5,
+  },
 };

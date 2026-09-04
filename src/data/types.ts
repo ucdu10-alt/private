@@ -56,6 +56,8 @@ export interface ThemeMeta {
   subtitle?: string;
   /** Raw unit label used by some formatters, e.g. "分", "店舗", "%" */
   unit: string;
+  /** Label shown above the big value in the 'bigNumber' layout (see layoutStyle), e.g. "店舗数". Defaults to `unit` if omitted. */
+  valueLabel?: string;
   valueFormatterId: ValueFormatterId;
   rankDirection: RankDirection;
   /** Small print shown on the final summary screen, e.g. data source / disclaimer */
@@ -91,6 +93,16 @@ export interface ThemeMeta {
   closingLine?: string;
   /** Overrides how long the closing ranked-list screen stays up. Defaults to timing.ts's FINAL_TOP_FIVE_FRAMES (3s) if omitted. */
   finalScreenSeconds?: number;
+  /**
+   * Which per-prefecture layout to render during the main sweep. Defaults to
+   * 'default' (RankingScene: map-dominant, value/rank overlaid on the map).
+   * 'bigNumber' (BigRankingScene) inverts that priority -- rank, prefecture
+   * name, and value are stacked as their own oversized, non-overlapping
+   * blocks for maximum legibility, and the map shrinks to a supporting
+   * strip. Use this when reading the number matters more than seeing the
+   * map animate.
+   */
+  layoutStyle?: 'default' | 'bigNumber';
 }
 
 /** A theme with its CSV loaded and rankings computed, ready to render. */
